@@ -1,0 +1,198 @@
+sudo dnf group install -y "Development tools"
+sudo dnf install -y kernel-devel
+
+sudo hostnamectl set-hostname whatever.localhost
+
+-
+
+sudo apt install -y build-essential linux-headers-$(uname -r)
+
+-
+
+grep --help
+help cd
+man man-pages
+
+-
+
+mkdir -p parent/child
+
+mkdir {dir1,dir2,dir3}
+mkdir dir{1,2,3}
+touch file{a,b,c}.txt
+
+echo "A new line" >> textfile.txt
+
+-
+
+cat >> textfile.txt
+This is a new line
+	ctrl+d to save it
+
+cp -a
+	preserves all metadata
+cp -u
+	only copies if newer
+cp -R
+	recursive (folders)
+cp -i
+	interactive, ask before overwriting
+
+rmdir
+	only empty folders
+rm -r
+	remove directory with files
+rm -ir
+	interactive
+rm file{cd}.txt
+	removes filec.txt and filed.txt
+
+==
+
+create links
+
+symbolic link vs hard link
+
+hard links:
+
+ln whatyourelinkingto.txt whatyouwanttocallthelink.txt
+
+Hard links create another name that points to the same data blocks that even have the same index or inode number.
+
+advantages of hard links:
+	takes up virtually no space
+	doesn't break when target is deleted
+	performance
+
+disadvantages:
+	can only hard link files and not directories
+	can not link across file systems (different drives or partitions)
+	transparent so difficult to identify
+	must remove all inodes (index nodes) to delete hard links
+
+ls -l
+	usually files have 1 inode, so if it's 2 this is a hint it's a hard link
+
+can compare two different files if they point to the same inode with stat
+stat file.txt
+stat filelink.txt
+
+symbolic link:
+
+ln -s file.txt filesymlink.txt
+
+ls -l
+	will show a symbolic link as
+	lrwxrwxrwx. 1 user1 user1 8 Apr 17 03:37 filesymlink.txt -> file.txt
+	-rw-rw-r--. 2 user1 user1 0 Apri 17 03:33 file.txt
+the permissions on the real file are enforced (not symbolic link excessive permissions)
+
+removing the original file will cause the symbolic link to break (show red in ls -l)
+the inode on hardlink will remain but show as 1 with ls -l
+
+advantages of symbolic links:
+	can link across file systems
+	can link to directories
+	easy to identify
+
+disadvantages of symbolic links:
+	takes up space (small)
+	breaks if target is deleted
+	not seamless - commands may act differently when dealing with a symbolic link
+
+pro tip:
+ln -s archive/ dirlink
+rm dirlink/
+	this will delete the directory archive, not the link
+	instead, remove the trailing /
+rm dirlink
+
+==========
+
+I/O redirection
+
+3 streams are created by a Linux shell when a command runs
+
+STDIN	->	command	->	STDOUT
+			->	STDERR
+
+Function	Name	File Descriptor #
+Input		STDIN	0
+Output		STDOUT	1
+ERROR OUTPUT	stderr	2
+
+Command output methods:
+Pipes - Takes output of a command and sends to the input of another
+Redirects - Takes output of a command and sends to a file in the file system
+
+Pipes
+Command	->	STDOUT	->	Pipe	->	STDIN	->	Command
+
+Redirects
+Command	->	STDOUT/STDERR	->	&>	File
+
+grep tcp /etc/services | less
+This uses the grep command to search through the /etc/services file for the word tcp and sends the output to the less command, which displays it one page at a time. (press q to quit)
+
+grep tcp /etc/services | awk '{print $1}' | sort | less
+This uses the grep command to search through the /etc/services file for the word tcp and then sends the resulting lines to the awk command, which only prints the first column. Then sends the remaining output to the sort command which sorts in dictionary order and finally sends it to the less command to show one page at a time.
+
+unnamed pipe is the default
+named pipe - FIFO = First In First Out
+	can pipe commands between terminals
+
+Command	->	/home/mypipe	->	Command
+
+a named pipe exists in the file system, that acts like a file on the disk
+
+terminal one:
+nkfifo named_pipe
+echo "Hi" > named_pipe
+
+terminal two:
+cat named_pipe
+	// Hi
+
+==========
+
+File redirects and tees
+-----------------------
+
+find > myfiles.txt
+List all files in the current directory, saves STDOUT to myfiles.txt
+
+find 2> myfiles-err.txt
+Redirect STDERR to a file
+
+find > myfiles.txt 2> myfiles-err.txt
+Also works
+
+find &> alloutput.txt
+Redirect STDERR and STDOUT to a file
+
+These all overwrite file.  We can instead append to end of file with >>
+
+find >> myfiles.txt
+find 2>> myfiles-err.txt
+find &>> alloutput.txt
+
+Redirect a file to STDIN:
+mysql -u user1 p db_name < db.sql
+
+Redirect to STDIN then output STDOUT and STDERR
+mysql -u user1 p db_name < db.sql > out.txt 2> outerr.txt
+
+tee splits output between a file and the sceen
+
+Redirect STDOUT to a file and to the screen:
+find | tee myfiles.txt
+
+Append STDOUT to a file and to the screen:
+find | tee -a myfiles.txt
+
+Pipe only receives STDOUT by default, so we can combine STDOUT and STDERR into one stream.
+
+Pipe STDERR and STDOUT to a command:
+find 2>&1 | grep example.txt
+
+2> redirects STDERR to &1 which is STDOUT.  This merges both STDERR and STDOUT and outputs on file descripter 1 (STDOUT). Then it pipes to grep to search it
