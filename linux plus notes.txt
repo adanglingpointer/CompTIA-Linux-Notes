@@ -195,4 +195,53 @@ Pipe only receives STDOUT by default, so we can combine STDOUT and STDERR into o
 Pipe STDERR and STDOUT to a command:
 find 2>&1 | grep example.txt
 
-2> redirects STDERR to &1 which is STDOUT.  This merges both STDERR and STDOUT and outputs on file descripter 1 (STDOUT). Then it pipes to grep to search it
+2> redirects STDERR to &1 which is STDOUT.  This merges both STDERR and STDOUT and outputs on file descripter 1 (STDOUT). Then it pipes to grep to search it.
+
+Newer versions of bash accept this alternative syntax:
+find |& grep example.txt
+
+This also does the same thing, redirecting STDERR and STDOUT to STDOUT.
+
+-
+
+Pipe only STDERR to a command:
+find 2>&1 >/dev/null | grep example.txt
+
+First it redirects STDERR on file descriptor 2 to STDOUT on file descriptor 1.  Then it redirects the original (old) STDOUT to /dev/null (oblivion!) so it doesn't get sent to the pipe.  Only STDERR gets send through the pipe to grep.
+
+==
+
+Find files using locate
+-----------------------
+
+locate uses a database created by the updatedb command.  it is fast but only finds files listed in database.  a system service updates once/day.
+
+locate bzip2
+
+print a number of how many results will be found:
+locate -c bzip2
+
+search for two items:
+locate bzip2 man
+
+search for items that contain both items/search terms:
+locate -A bzip2 man
+
+case insensitive searching:
+locate -i high
+
+wildcards with ls:
+ls /etc/*.conf
+
+regular expressions:
+locate --regexp '^/usr.*pixmaps.*jpg$'
+
+Find all paths that start with /usr, include the word pixmaps, and end with jpg.
+^ anchors to the beginning of the line
+.* matches any number of any characters
+$ anchors to the end of the line
+
+regular expresions for finding more than one:
+locate --regex '^/usr.*{pixmaps|backgrounds}.*jpg'
+
+this includes results for pixmaps or backgrounds
