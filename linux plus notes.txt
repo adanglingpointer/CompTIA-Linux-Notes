@@ -44,7 +44,7 @@ rm -r
 	remove directory with files
 rm -ir
 	interactive
-rm file{cd}.txt
+rm file{c,d}.txt
 	removes filec.txt and filed.txt
 
 ==
@@ -105,6 +105,7 @@ ln -s archive/ dirlink
 rm dirlink/
 	this will delete the directory archive, not the link
 	instead, remove the trailing /
+	[didn't work for me on Debian]
 rm dirlink
 
 ==========
@@ -245,3 +246,33 @@ regular expresions for finding more than one:
 locate --regex '^/usr.*{pixmaps|backgrounds}.*jpg'
 
 this includes results for pixmaps or backgrounds
+
+locate -S
+List statistics of locate's database
+
+==
+
+find command
+============
+
+doesn't rely on database, so always up to date
+
+sudo find / -name *bash*
+
+sudo find / -not -iname *bash
+
+-not = does not include
+-iname = case insensitive
+
+with find we can also use:
+-f = file
+-d = directory
+-l = symbolic link
+-c = character device
+-b = block device
+
+sudo find / -type f -name *bash*
+
+can also search for more than one type at a time:
+
+sudo find / -type f,d -name *bash*
