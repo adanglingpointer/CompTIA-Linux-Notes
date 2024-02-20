@@ -276,3 +276,99 @@ sudo find / -type f -name *bash*
 can also search for more than one type at a time:
 
 sudo find / -type f,d -name *bash*
+
+find also works with -regex
+
+Finding files by size:
+find /usr -size +10M
+	shows all files more 10MB
+
+Signifier	Unit of Measurement
+c		Bytes
+k		Kilobytes
+M		Megabytes
+G		Gigabytes
+b		512-byte blocks
+
+We can also specify -empty for empty files:
+find /usr -size -empty
+
+Option		|File Type
+-amin		|Last accessed (by minutes)
+-atime		|Last accessed (by days)
+-cmin		|Last changed (by min)
+-ctime		|Last changed (by days)
+-mmin		|Last modified (mins)
+-mtime		|Last modified (days)
+
+find / -atime 1
+find / -atime -1
+find / -atime +1
+
+Find files that belong to a certain user or group:
+sudo find / -user user1
+
+We can also use find to search by permissions:
+-readable
+-writable
+-executable
+
+or numeric permissions:
+-perm 644 [find by exact permissions]
+-perm -644
+-perm /644
+
+or symbolic permissions:
+-perm u=rw,g=r,o=r [find by exact permissions]
+-perm -u=rw,g=r,o=r
+-perm /u=rw,g=r,o=r
+
+Find by exact permissions:
+-perm 644
+-perm u=rw,g=rw,o=r
+ matches: -rw-rw-r--.
+
+Find by all of the specified permissions:
+-perm -664
+ matches:	-rw-rw-r--
+		-rw-rw-rx
+will match all files with at least rw- rw- and r--, this would also match a file with 665 permissions, because that file would also have 664 in addition to execute.
+
+Find by any of the specified permissions:
+-perm /644 [was written with a + in the past, but this is no longer recommended]
+will match files with any combition of rw-, r--, and r--
+ matches	-rw-------.
+		----r-----.
+		-------r--.
+
+Combining permissions can become complex.
+
+find / -perm -a+r -perm /a+w \! -perm /a+x
+This will find files that are readable by everyone [ -perm -a+r ],
+at least one write bit is set [ -perm /a+w ],
+and not executable by anyone [ \! -perm /a+x ]
+
+Finding by SELinux security context using the -context option:
+find / -type f -context '*ifconfig_exec_t*'
+context is matches using pattern matching
+
+Find can also perform a function with the files.
+
+Action		Function
+-print/-printf	Display output
+-delete		Dlete matching files
+-ls		List metadata of files
+-prune		Omit matching files
+-exec		Execute command for each
+
+For example, executing an external command:
+find / -size +1M -exec stat -c "%s %n" {}\;
+This searches for files larger than 1MB [ -size +1M ],
+and then runs the stat command on each file which outputs the size and name [ -exec stat -c "%s %n" ].
+The curly braces are a placeholder for each search item's name which is passed to the stat command {}
+\; tells find there are no more commands to run.
+
+Other examples:
+
+Find files with certain permissions and change them:
+find / -type f -perm 644 -exec chmod 664 {}\;
