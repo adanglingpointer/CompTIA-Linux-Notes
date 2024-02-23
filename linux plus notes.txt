@@ -1,3 +1,5 @@
+
+
 sudo dnf group install -y "Development tools"
 sudo dnf install -y kernel-devel
 
@@ -6,6 +8,24 @@ sudo hostnamectl set-hostname whatever.localhost
 -
 
 sudo apt install -y build-essential linux-headers-$(uname -r)
+
+==
+Filesystem Hierarchy Standard
+-----------------------------
+
+/ (known as slash, root directory, or top level directory)
+	/bin	= essential user command binaries (for use by all users)
+		simple commands such as ls and cat
+	/sbin	= utilities used for system administration
+		command binaries essential for booting, restoring, recovering, and/or repairing the system,
+		in addition to the binaries in /bin
+	/boot	= bootloader files
+		everything required for the boot process except configuration files not needed at boot time
+		(config files for bootloaders not required at boot time must be placed in /etc) 
+	/dev	= stores device files - an interface to the system's hardware through a device drive
+		can also be input/output characters that act as if they were devices
+	/etc	= contains static configuration files
+		files should be stored in subdirectories
 
 -
 
@@ -292,6 +312,7 @@ b		512-byte blocks
 
 We can also specify -empty for empty files:
 find /usr -size -empty
+(doesn't work for me)
 
 Option		|File Type
 -amin		|Last accessed (by minutes)
@@ -362,7 +383,7 @@ Action		Function
 -exec		Execute command for each
 
 For example, executing an external command:
-find / -size +1M -exec stat -c "%s %n" {}\;
+find / -size +1M -exec stat -c "%s %n" {} \;
 This searches for files larger than 1MB [ -size +1M ],
 and then runs the stat command on each file which outputs the size and name [ -exec stat -c "%s %n" ].
 The curly braces are a placeholder for each search item's name which is passed to the stat command {}
@@ -372,3 +393,7 @@ Other examples:
 
 Find files with certain permissions and change them:
 find / -type f -perm 644 -exec chmod 664 {}\;
+
+Move .tar.gz files in /logs older than 7 days and move them into /backups:
+find /logs -name "*.tar.gz" -mtime +7 -exec mv {} /backups \;
+
