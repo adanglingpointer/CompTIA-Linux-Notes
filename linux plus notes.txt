@@ -26,6 +26,57 @@ Filesystem Hierarchy Standard
 		can also be input/output characters that act as if they were devices
 	/etc	= contains static configuration files
 		files should be stored in subdirectories
+		can not be executible binaries
+	/home	= home directory for regular users to store their personal files
+		store one directory per user
+	/lib	= shared library images needed to boot the system and run commands in the filesystem,
+		such as those in /bin and /sbin
+		system libraries and kernel modules
+		may be diff lib folders, such as /lib64
+	/media	= mount point for removable media
+		cd-roms, external USB drives, etc.
+	/mnt	= mount points for temporarily mounted filesystems
+		such as a network drive
+	/root	= home directory for the root user, for personal files
+	/opt	= optional software
+		reserved for the installation of add-on application software packages
+		often, software that is not distributed in a Linux software package format will be installed here
+	/proc	= a virtual filesystem, files do not really exist on the disk
+		used for storage and retrieval of process information, as well as other kernel and memory info
+	/srv	= store site-specific data, for example virtual hosts or by protocol
+	/sys	= store info about devices connected to computer, another virtual file system
+	/tmp	= temporary files
+	/run	= system information data describing the system since it was booted
+		these files must be cleared at the beginning of the boot process
+	/usr	= essential user command binaries (for use by all users)
+		read only, not written to unless installing new software
+	/usr/bin	= primary directory of executable commands on the system
+			on some systems, /bin is a link to this directory
+	/usr/local	= hierarchy for installing software locally
+			usually not through software package manager
+			needs to be safe from being over-written when system software is updated
+	/usr/sbin	= nonessential binaries used exclusively by the system admin
+			system repair, system recovery
+			on some systems, /sbin links here
+	/usr/share	= a hierarchy for read-only architecture independent data files
+			for example, a site with 386 Alpha Empire PC platforms might maintain a single /usr/share 
+				directory that is centrally mounted
+			icons, wallpaper, etc
+	/usr/src	= source code may be placed in this subdirectory only for reference purposes
+	/var	= contains variable data files
+		including spool directories and files, administrative and login data, transient and temp files
+		a system log file, a mail spool
+	/var/cache	= application cache data
+			the app must be able to regen, so this is generally safe to delete
+	/var/log	= contains miscellaneous log files
+	/var/spool	= contains data that is awaiting some kind of later processing
+			print spools, outgoing mail spools, etc.
+	/var/mail	= user mailbox files
+	/var/lib	= holds state information pertaining to an application or the system
+			such as lock files
+
+Where in the Linux Filesystem Hierarchy is most of the Linux operating system installed?
+/usr stores the majority of all Linux commands and tools. In some distributions /bin and /sbin are actually links to directories in /usr.
 
 -
 
@@ -66,6 +117,9 @@ rm -ir
 	interactive
 rm file{c,d}.txt
 	removes filec.txt and filed.txt
+
+cd -
+	a shortcut to return to the previous directory
 
 ==
 
