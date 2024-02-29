@@ -324,10 +324,10 @@ this includes results for pixmaps or backgrounds
 locate -S
 List statistics of locate's database
 
-==
+=====
 
 find command
-============
+------------
 
 doesn't rely on database, so always up to date
 
@@ -451,3 +451,138 @@ find / -type f -perm 644 -exec chmod 664 {}\;
 Move .tar.gz files in /logs older than 7 days and move them into /backups:
 find /logs -name "*.tar.gz" -mtime +7 -exec mv {} /backups \;
 
+=====
+
+nano
+----
+
+nano -u nanofile.txt
+	opens a file with undo feature enabled
+
+ctrl+g = guide/help
+	ctrl+x to exit guide
+ctrl+o = write file changes out to disk
+ctrl+r = insert another file's contents into current document
+ctrl+k = cut line of text
+	pressing multiple times adds to cut 'stack' until pasted
+alt+6 = copy text
+ctrl+u = uncut/paste
+ctrl+6 = begin marking text/highlight
+alt+u = undo
+alt+e = redo
+ctrl+w = search through text (where)
+alt+r = find & replace
+alt+c = turn on/off line numbering (count)
+ctrl+alt+- = go to line number
+
+=====
+
+vim
+---
+
+vim vimfile.txt
+	open file with vim
+
+normal mode & insert mode
+
+normal mode - characters you type are commands
+insert mode - characters inserted as text
+
+i
+	switch to insert mode
+
+esc
+	switch back to normal mode
+
+in normal mode:
+
+hjkl shortcuts
+	h = left
+	j = down
+	k = up
+	l = right
+
+6l = move right 6 character
+
+w = move forward by whole word
+b = move back by whole word
+^ = move to beginning of line
+$ = move to end of line
+
+shift+h = beginning of file
+shift+m = move to middle of file
+shift+l = last line of file
+
+dl = delete character (same as delete key)
+dd = delete line
+
+u = undo
+ctrl+r = redo
+
+escape+: = command line mode
+	w = write changes to disk
+	w newfile.txt = save changes to new file
+	q = quit
+	q! = force quit (without saving changes)
+
+	can stack as wq
+
+yl = copy a letter
+yw = copy a word
+yy = copy a line
+p = paste/put
+dl = cut/delete letter
+dw = cut/delete word
+dd = cut/delete line
+
+5dd = cut 5 lines
+etc..
+
+cc = cut line and immediately enter edit mode
+
+/ = search from current position down
+? = search from current position upward
+	press enter and then,
+	n = step forward through results
+	N = step backwards through results
+
+:nohl
+	turn off search highlighting
+
+:%/Line/Newline
+	replace Line with Newline
+
+vim file1.txt file2.txt file3.txt
+	open multiple files at once
+
+:next
+	next file
+:prev
+	previous file
+:wnext
+	save and move to next doc
+:wprev
+	save and move to prev doc
+:2next
+	move 2 docs first
+:args
+	list documents open
+
+=====
+
+find text in files with grep
+----------------------------
+
+grep root /etc/passwd
+	search for the root root in /etc/passwd
+
+run two commands in a row, second one after the first finishes, whether the first finished successfully or not:
+	echo "hi" ; echo "there"
+	// hi
+	// there
+
+only run the second command if the first succeeds:
+	mkdir newfolder && cd newfolder
+
+only run the second command if the first fails:
+	mkdir newfolder || echo "directory creation failed"
