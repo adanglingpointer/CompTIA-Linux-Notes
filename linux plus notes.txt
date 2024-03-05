@@ -586,3 +586,62 @@ only run the second command if the first succeeds:
 
 only run the second command if the first fails:
 	mkdir newfolder || echo "directory creation failed"
+
+cd into new folder, otherwise echo error message:
+mkdir newfolder2 && cd newfolder2 || echo "Directory creation failed"
+
+cd
+	by itself, brings you to your home directory
+
+{ echo "hi" ; echo "there" ; }
+	hi
+	there
+
+echo "hi" ; echo "there" > hello.txt
+	hi
+cat hello.txt
+	there
+
+{ echo "hi" ; echo "there" ; } > hello.txt
+cat hello.txt
+	hi
+	there
+
+curly braces force bash to process all commands inside the braces as one command
+
+( echo "hi" ; echo "there" ; ) > hello.txt
+cat hello.txt
+	hi
+	there
+
+curly braces - run commands in the same hell
+parentheses - run commands in a subshell, they will have different variable scope
+
+a=0; (a=10; echo "in=$a"); echo "out=$a"
+	in=10
+	out=10
+
+==========
+
+Edit text with sed
+------------------
+
+sed is a stream editor - it edits text as it passes through
+- uses basic regular expressions by default
+- optionally uses extended regular expressions
+
+sed modes
+---------
+mode		function
+----		--------
+print		prints text like grep
+delete		deletes matched text
+substitute	finds and replaces
+
+by default sed prints out all out, so use -n to only print those that match a pattern
+
+sed -n '/pattern/p'
+
+-E for extended regular expressions
+	sed -n -E '/ERE regex/p'
+the trailing p is the print command
