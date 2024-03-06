@@ -638,10 +638,79 @@ print		prints text like grep
 delete		deletes matched text
 substitute	finds and replaces
 
-by default sed prints out all out, so use -n to only print those that match a pattern
+by default sed prints out all output, so use -n to only print those that match a pattern
 
 sed -n '/pattern/p'
 
 -E for extended regular expressions
 	sed -n -E '/ERE regex/p'
 the trailing p is the print command
+
+piping into sed:
+	cat /etc/passwd | sed -n '/pattern/p' > newpasswd
+you cannot redirect back to the original file or the file will end up being blank
+
+loading a file into sed
+	sed -n '/pattern/p' /etc/passwd > newpasswd
+
+you can specify the -i option to change the file in place:
+	sed -n -i '/pattern/p' /etc/passwd
+
+deleting in sed, with /d:
+	sed '/pattern/d'
+
+	sed -E '/ERE regex/d'
+
+substituting in sed with s:
+	sed 's/pattern/pattern/g'
+	/g is to match globally
+
+printing a range of lines:
+	sed '5,10p'
+
+deleting a range of lines:
+	sed '5,10d'
+
+substituting for a range of lines
+	sed '5,10s/pattern/pattern/g'
+
+pattern delimiters
+
+/home/user1/Downloads/
+	sed 's/\/home\/user1\/Downloads\//pattern/g'
+we can use backslashes to escape forward alshes
+
+a possibly better solution: sed's ability to replace forward slash delimeter with another character
+
+/home/user1/Downloads/
+	sed 's#/home/user1/Downloads/#pattern#g'
+
+# sed -n '/root/p' passwd
+root:x:0:0:root:/root:/bin/bash
+operator:x:11:0:operator:/root:/sbin/nologin
+
+# sed -n '/^root/p' passwd
+root:x:0:0:root:/root:/bin/bash
+
+# sed -n 's/^root/toor/p' passwd
+toor:x:0:0:root:/root:/bin/bash
+
+Using regexes in sed
+--------------------
+
+sed -E 's/:([0-9][0-9]{0,2}):/:uid:/' passwd
+	This matches a colon followed by one instance of a number from zero through nine
+	and a second number from zero to nine, either zero, one, or two times as specified by the modifier
+	in curly braces {0,2} and then another colon.
+	This expression will match a colon, a number from zero to 999, followed by another colon,
+	and replace it with a text :uid:
+
+You can also delete patterns by substituting with nothing:
+	sed -E 's/:([0-9][0-9]{0,2})://' passwd
+
+surrounding phone number area code with parentheses:
+	sed -E 's/[0-9]{3}/(&)/' phonenumbers.txt
+this will repeat the first set of three numbers (using the & symbol) and surrounds it with parentheses ( )
+
+using Back References in sed, we can group patterns with parentheses:
+	sed -E 's/([0-9]{3})([0-9]{3})([0-9]{4})/(\1)\2-\3/' phonenumbers.txt
