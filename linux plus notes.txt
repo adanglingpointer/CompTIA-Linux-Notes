@@ -568,7 +568,7 @@ vim file1.txt file2.txt file3.txt
 :args
 	list documents open
 
-=====
+==========
 
 find text in files with grep
 ----------------------------
@@ -714,3 +714,131 @@ this will repeat the first set of three numbers (using the & symbol) and surroun
 
 using Back References in sed, we can group patterns with parentheses:
 	sed -E 's/([0-9]{3})([0-9]{3})([0-9]{4})/(\1)\2-\3/' phonenumbers.txt
+
+examples: sed.sourceforce.net/sed1liners.txt
+
+=====
+
+Linux Boot Process
+------------------
+
+1. Firmware stage
+2. Bootloader stage
+3. Kernel stage
+4. Initialization stage
+
+Firmware stage
+ - Power-On Self-Test (POST)
+ - executes code in the BIOS for legacy systems
+ - executes code in the UEFI firmware for new computers
+ - starts bootloader
+
+Bootloader stage
+ - firmware executes bootloader (grub2) code on drive
+ - bootloader reads its configuration file
+ - in BIOS machines, grub usually reads in /boot/grub2/grub.cfg, for EUFI systems the location can vary
+ - executes the kernel
+
+Kernel stage
+ - kernel loads the RAM disk into RAM
+	this RAM disk servers as a temporary root file system
+ - kernel loads device drivers and config files from RAM disk
+	this file system includes kernel modules, drivers, and possibly even installation automation files,
+	such as kickstart files
+ - kernel unmounts RAM disk and mounts root file system
+ - starts initialization stage
+
+Initialization stage
+ - grandfather process (systemd) is started by the kernel
+	in older versions of Linux this was the sys 5 INIT process
+	INIT was replaced by Upstart in many distributions such as Red Hat and Ubuntu
+	and now Upstart has been replaced by systemd
+ - systemd starts system services
+ - systemd starts login shells and GUI interface
+
+systemd has the concept of 'targets' that are similar to the old sys 5 INIT run levels
+you can think of a target as a system configuration
+for instance, by default, Enterprise Linux boots into the graphical target
+a system can be booted into different targets
+there are targets for different purposes, such as rescuing a system after a crash
+
+==========
+
+Linux boot loaders and sources
+------------------------------
+
+LILO Bootloader
+ - the original bootloader
+ - boots Linux from hard drives
+ - static config - /etc/lilo.conf
+ - config changes needed to be written to the MBR
+ - used Linux device naming conventions
+ - development stopped in 2015 and most distributions do not use it
+
+Grand Unified Bootloader
+ - GRUB 0.97 / grub-legacy
+ - GNU project - not Linux specific
+ - does not use Linux device names
+	it starts counting from 0, so /dev/sda1 might be drive 0,0
+ - static config file in /etc
+ - writes to MBR once, not everytime the config changes
+ - did not support RAID, logical volumes, or new file systems
+
+GRUB 2
+ - default bootloader for Linux
+ - automatically created configuration
+	it can gather info about the system and create the config file accordingly
+ - modular and expandable
+ - built-in console allowing you to manage boot environments before the OS has even loaded
+ - supports live boot and ISO images
+
+alternative bootloaders
+	ISOLINUX
+		boots Linux from ISO optical disks
+		a derivative of SYSLINUX
+	SYSLINUX
+		boots Linux from FAT formatted disk storage
+		floppy disks and USB thumb drives
+	PXELINUX
+		also a derivative of SYSLINUX
+		boots Linux from PXE network server using a network ROM conforming to Intel pre-boot execution
+		 environment (PXE).
+
+==========
+
+GRUB 2
+------
+
+ - scripting
+ - dynamic module loading
+ - custom menus and themes
+ - UUID for storage locations
+ - recovery console
+
+/boot
+	the kernels named vmlinux are compressed bootable kernels
+	the RAM disk will either be named initrd if your Linux system has a kernel older than 2.5, 
+	 or intitramfs if the kernels is newer than 2.6.
+	initrd acts as a disc that's in RAM but requires a driver to be compiled into the kernel
+	initramfs has the advantage that it's not a disk but rather a file system and can be extracted and used
+	 quicker.
+
+to manually create a rescue RAM disk (for example, to include a custom device driver) you can use the
+ 'mk initrd' for older systems, or 'draca' for newer ones
+draca is more powerful and included with Enterprise Linux
+
+/boot/grub2/grub.cfg
+	config that is over-written by grub2, so don't edit
+
+/etc/default/grub
+	grub menu timeout and kernel options
+
+(
+sudo su -
+	switches to root user
+)
+
+/etc/grub.d
+	this is a directory
+	contains README
+	files starting with 00 are reserved
