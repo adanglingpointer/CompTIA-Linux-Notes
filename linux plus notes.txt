@@ -842,3 +842,86 @@ sudo su -
 	this is a directory
 	contains README
 	files starting with 00 are reserved
+	boot entries should start with 10, third party apps start with 20
+
+30_os-prober looks for other installed operating systems and adds a menu option
+
+installing grub bootloader
+--------------------------
+lsblk
+	list your drives
+sudo grub2-install /dev/sda
+	install grub on first drive
+sudo grub2-mkconfig
+	after making any grub config changes to recreate boot files in /boot
+
+grub2-reboot
+	reboot into a specific kernel one time
+grub2-set-default
+	set default kernel
+
+==========
+
+rescue a system
+---------------
+
+kernel panic
+	missing drivers
+	bad drives
+
+two ways to handle:
+	boot into older kernel
+	boot into different systemd target
+
+grub2-set-default 1
+	change default to most recent previous kernel
+	grub starts counting from 0, so newly installed non-functioning kernel would be 0
+
+systemd emergency target
+	requires root password
+	does not:
+		load drivers
+		start services
+		start GUI
+		mount/read-write
+
+in grub, select most recent kernel and press 'e' key to edit
+find the line that includes the word vmlinux, this is the kernel line and the items after are kernel parameters
+press End to go to end of line, add a space and add
+	systemd.unit=emergency.target
+press ctrl+x to finish booting
+
+journalctl -xb
+	view all journald messages for this boot
+dmesg
+	the debug message command, similar output
+	alternative to journalctl, also works for older systems that do not use systemd
+dmidecode
+	info about bios and hardware
+mount
+	show mounted volumes
+
+in emergency mode, the route partition / will be read only
+mount -o remount rw /
+	remount root as read/writable
+
+ctrl+d to exit, system will continue to boot
+
+-
+
+if you don't have the password or need password recovery, you'll need a different method
+
+reboot, and press e on kernel in grub again
+at the end of vmlinux line, add:
+	init=/bin/sh
+press ctrl+x to boot up
+
+mount -o remount rw /
+
+passwd
+	reset root password, won't ask for existing pass
+
+touch /.autorelabel
+	SE Linux rewrite the security context of all files on the next reboot
+/usr/sbin/reboot -f
+	force reboot via full command location
