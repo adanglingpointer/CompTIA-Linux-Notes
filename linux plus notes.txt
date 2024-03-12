@@ -918,10 +918,110 @@ press ctrl+x to boot up
 
 mount -o remount rw /
 
-passwd
+passwd root
 	reset root password, won't ask for existing pass
 
 touch /.autorelabel
 	SE Linux rewrite the security context of all files on the next reboot
 /usr/sbin/reboot -f
 	force reboot via full command location
+
+login to system, switch to root to make sure it works
+	su
+
+-
+
+to persistently boot into a different systemd target, you use the systemctl command
+
+sudo systemctl get-default
+	show default target
+sudo systemctl --type=target --all
+	show all possible targets
+
+targets include:
+	emergency.target
+	garphical.target
+	multi-user.target
+
+sudo systemctl set-default graphical.target
+	change default systemd target
+
+==========
+
+Linux processes
+---------------
+
+process - an instance of a program that is being executed on a CPU from memory
+
+process resources:
+	- memory
+	- CPU time
+	- Process ID (PID)
+
+process ID tree:
+	- every process has an ID
+	- each process also has a parent process that started it
+	- processes can spawn child processes
+
+systemd(1)	-	{sshd}(1294)
+		-	{sshd}(1304)
+		-	{sshd}(1395)	-	sftp-server(6964)
+					-	sftp-server(6962)
+
+systemd is sshd's parent process
+systemd is the only process that the kernel starts directly, the grandfather process
+
+==========
+
+monitor processes using ps
+--------------------------
+
+ps
+	shows processes ran by the user executing it
+
+ps has 3 types of syntax options:
+	- UNIX
+		-c
+	- BSD
+		c
+	- GNU
+		--command
+
+ps -e
+	display every process, even those ran by other users
+ps -eH
+	hierarchy options shows you which processes start other processes
+ps -ef
+	show more info about all processes (full option)
+	includes start time, CPU utilization, start time, and command arguments with options
+ps -eF
+	shows more info like -f but also adds allocated memory to the total memory size, 
+	 and the CPU the process is currently running on
+ps -elF
+	shows even more info (long format)
+	17 columns of information
+
+ps -e --format uid,pid,ppid,%cpu,cmd
+	shows uers, PID, parent PID, CPU, and command name ran for all process
+ps -e --format uid,pid,ppid,%cpu,cmd --sort %cpu
+	sort by CPU utilization from least to greatest
+ps -e --format uid,pid,ppid,%cpu,cmd --sort -%cpu
+	sort by greatest to least
+
+ps -U root
+	show processes ran by root user
+	-u to specify user ID
+ps -C firefox
+	show specific processes
+
+ps -e --format uid,pid,tty,%cpu,cmd --sort %cpu
+	shows every process, the user ID, the process ID, the terminal they were run on, the CPU utilization,
+	 and the command name sorted with the highest CPU utilization at the bottom
+
+ps -e --format uid,pid,tty,rss,cmd --sort rss
+	sort by MEM usage
+	good for finding processes using the most memory
+
+ps -U user1 --format %mem | awk '{memory +=$1}; END {print memory}'
+	this sends the memory usage of each program that user one ran to awk,
+	 which sums them and prints the total on the screen
