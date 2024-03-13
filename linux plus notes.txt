@@ -1,4 +1,65 @@
+Linux Distributions
+-------------------
 
+most distros are based off of four main branches
+
+	- Arch
+		- Manjaro
+		- EndeavourOS
+	- Red Hat
+		- Conectiva
+		- Mandrake
+		- Mandriva
+		- Mageia
+		- Fedora
+		- CentOS Enterprise Linux
+		- Rocky Enterprise Linux
+		- CloudLinux OS
+	- Slackware
+		- S.u.S.E. SuSE
+		- SUSE
+		- OpenSUSE
+		- SLAX
+		- VectorLinux
+	- Debian
+		- Ubuntu
+		- Linux Mint
+		- Kali
+
+Slackware
+	- one of the earliest distributions
+	- created in July 1993
+	- designed for advanced users
+	- uses pkgtools package management system
+	- SUSE was based off of Slackware originally, however now bares little resembles and uses RPM (from Red Hat)
+
+Debian Linux
+	- Named for Debra and Ian Murdock
+	- released in December 1993
+	- maintained by a community
+	- not associated with any corporation
+	- maintainers and project leaders are elected
+	- stresses importance of freedom
+	- only includes free software (free as in freedom)
+	- non-free software can be installed
+		i.e., software that doesn't comply with Debian free software guidelines
+	- uses Advanced Package Tool (APT)
+	- six of top 10 distros on distrowatch.com are based on Debian
+
+Red Hat
+	- early commercial distribution
+	- November 1994
+	- went public in 1999
+	- first billion-dollar open-source company in 2012
+	- Red Hat has majority of the commercial Linux server market share
+	- uses Red Hat Package Manager (RPM)
+
+Arch
+	- created in early 2000s
+	- simple and lightweight
+	- uses the pacman package manager
+
+==========
 
 sudo dnf group install -y "Development tools"
 sudo dnf install -y kernel-devel
@@ -1023,5 +1084,62 @@ ps -e --format uid,pid,tty,rss,cmd --sort rss
 	good for finding processes using the most memory
 
 ps -U user1 --format %mem | awk '{memory +=$1}; END {print memory}'
-	this sends the memory usage of each program that user one ran to awk,
+	this sends the memory usage of each program that user1 ran to awk,
 	 which sums them and prints the total on the screen
+
+we can also use $USER to substitute for the user running the command
+
+shell script for the same thing:
+
+//showusermem.sh
+
+#!/bin/bash
+ps -U $1 --format %mem | awk '{memory +=$1}; END {print memory}'
+	$1 takes the first argument passed to the script
+	make the script executable:
+		chmod u+x showusermem.sh
+	run with the user as an argument:
+		./showusermem.sh user1
+
+if you don't want to provide the path to the script every time you run it, then place it in a
+ directory in your path variable, such as the bin directory in your home if you have one
+
+==========
+
+Monitor processes in real time
+------------------------------
+
+top
+
+	- press l to show or hide the load average/uptime
+	- press 1 to show CPU usage for all CPU cores
+	- press t to toggle between task and CPU states
+	- press m to toggle between different memory displays, or turn memory stats off
+	- press f to change which fields to display
+		press Space on the field you want to toggle
+		press s on the field you want to sort by
+		press -> to select a field in order to move it up or down, press <- to set it in place
+		press q to quit the field menu
+	- press c to toggle between command name and command line (location)
+	- press U, followed by username, to only show processes by that user
+		leaving username blank shows all users
+	- press u to specify by user ID
+	- press k for the kill prompt
+		then you will be prompted for a PID to kill
+		you can also specify a kill signal, SIGTERM/Signal 15 is the default
+		SIGTERM is the friendly way of killing a process
+		SIGKILL forcibly removes the process from memory, uses number 9
+		press Esc to cancel kill prompt
+	- press r for the renice prompt
+		will prompt for PID to renice
+		higher number = nicer on CPU = less CPU priority for process
+	- press M to sort by memory usage
+	- press P to sort by CPU usage (processor)
+	- press T to sort by the amount of time a process has been running
+	- press N to sort by process ID number
+	- press q to quit top
+
+htop
+	has some additional 
+
+yum/dnf/dpkg/rpm/apt
