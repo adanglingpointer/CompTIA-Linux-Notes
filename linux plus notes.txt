@@ -1140,6 +1140,103 @@ top
 	- press q to quit top
 
 htop
-	has some additional 
+	has some additional features
+	can click
+	f6 to change sorting order
 
-yum/dnf/dpkg/rpm/apt
+==========
+
+Manage processes
+----------------
+
+pgrep firefox
+	will print the main PID of firefox
+pidof firefox
+	will print all PIDs related to firefox
+pstree -p
+	show all running processes in a tree format with PIDs
+kill -l
+	list all possible kill signals you can send
+	generally you want to send a non-destructive signal like:
+		1) SIGHUP
+			forces a file to reread it's config file
+		10) SIGUSR1
+	or you want to terminate a process with:
+		9) SIGKILL
+		15) SIGTERM
+kill 56640
+	kills process via PID
+killall firefox
+	kills all processes with the name firefox
+
+first we can find the PID, then kill it:
+
+pidof dd
+kill -USR1 57329
+	USR1 is short for SIGUSR1, or term signal 10
+
+however, we can shorten these two command to one line with:
+
+kill -USR1 $(pidof dd)
+
+-
+
+All Linux processes run with a suggested priority level handled by a system called Nice
+
+range from 19 to 0 for unprivileged users
+and range -1 to -20 for privileged users (such as root)
+
+the most nice a process can be to the CPU is level 19
+a process with a nice level of 19 will demand very few CPU resources so it will get very little CPU time
+-20 is the least nice
+0 is the default nice level, only privileged users can go below 0
+
+dd if=/dev/zero of=/dev/null &
+	this command writes zeros to /dev/null which just gets discarded
+	am ampersand at the end of the line will cause dd to run asynchronously in the background,
+	 and give your prompt back
+	this process should take close to 100% of CPU core
+
+in top, NI = nice level
+PR = priority level,
+	is generally the nice level +20
+
+- setting a nice level is a suggestion to the linux kernel scheduler
+- depending on the nice level, the scheduler tuning, and the circumstances, the priority level may change
+
+renice -n 10 57439
+	giving less CPU time to PID 57439
+sudo renice -n -1 57433
+	giving higher CPU time to PID 57433
+
+if you know ahead of time how you want to influence the Linux schedular, you can start a process
+ with a desired nice level using the nice command instead of renice
+
+=====
+
+Manage process jobs
+-------------------
+
+ctrl+c terminates active task in foreground
+ctrl+z stops command and puts in background
+
+watch executes a command every two seconds until terminated
+
+watch ps -C dd --format pid,cmd,%cpu
+	this will run the ps command every two seconds, only show the dd command processes, 
+	 and output the process ID, the command name, and it's CPU usage
+
+jobs
+	shows currently running commands (and stopped commands)
+	inside square brackets is the job spec number
+	you can start this process back up either in the background or foreground
+
+bg 1
+	run job 1 (from job output) in the background
+	if you only have one job you don't actually have to specify the job spec number
+
+fg
+	bring the process back to the foreground (in terminal)
+
+dd if=/dev/zero of=/dev/null &
+	you can start processes in the background by appending an ampersand to the command line
