@@ -1240,3 +1240,132 @@ fg
 
 dd if=/dev/zero of=/dev/null &
 	you can start processes in the background by appending an ampersand to the command line
+
+==========
+
+Systemd processes
+-----------------
+
+system services
+	- processes that are started by the operating system and sit in the background waiting to handle requests
+	for example: web servers, file servers, mail servers, network servers
+
+daemon = system service
+Linux service naming conventions tack on the d for daemon: httpd, smbd, sshd, dhcpd
+
+ - when a Linux system boots, the boot loader loads the kernel
+ - the kernel in turn starts one super service (init)
+ - and that service starts all other processes
+ - most legacy Linux systems use System V Init (system 5 init) for this job
+
+SysVinit Process Tree:
+
+init	-	ModemManager
+	-	NetworkManader
+	-	abrtd
+	-	atd
+	-	auditd	-	sedispatch
+			-	auditd
+	-	gnome	-	ssh-agent
+			-	gnome-keyring
+	-	wpa_supplicant
+
+SysVinit Runlevels:
+
+ - each runlevel determined which services would be started
+ - there would be run levels for:
+	- command line only configurations
+	- network configurations
+	- troubleshooting situations
+	- full graphical systems
+ - you could switch between runlevels while the system was running
+
+	Runlevel 3
+		- acpid
+		- atd
+		- crond
+		- iptables
+	Runlevel 5
+		- acpid
+		- atd
+		- crond
+		- startx
+
+SysVinit shortcomings:
+ - the system had a few issues
+ - it started services synchronously (one at a time)
+ - and as such, a failed or slow service could hold up the others
+ - each service was a shell script that run, services started slowly
+ - didn't support dependencies, services ran independently of each other
+ - service restarts disruptive
+
+Linux service systems:
+ - SysVinit
+ - launchd
+ - Upstart
+ - systemd
+
+Upstart:
+ - designed by a former Ubuntu employee to solve some of SystemVinit's problems
+ - starts processes asynchronously
+ - monitors running processes
+ - backward compatible with SysVinit
+ - can be extended to interact with other event systems
+ - used by Enterprise Linux 6 - all development has stopped
+
+systemd:
+ - Enterprise Linux 7 and 8 use systemd
+ - it is becoming the standard across all types of Linux
+ - suite of software replacing traditional systems
+ - aims to unify Linux service configuration
+ - includes init system
+ - managed devices, logins, network connections, and logging
+ - most major distributions today use systemd
+
+==========
+
+Get systemd service status
+--------------------------
+
+systemd unit types:
+ - devices
+ - mounted volumes
+ - network sockets
+ - system timers (similar to cronjobs)
+ - targets (systemd equivalent to runlevels)
+
+systemd Unit
+ - systemd object that stores its configuration on disk as a unit file
+
+systemctl
+ - the systemctl command is what we use to manage systemd units
+
+systemctl list-units
+ - lists units the systemd currently has in memory
+ - units that are running or were running previously
+	services that are or were running previously
+
+systemctl list-unit-files
+ - lists installed unit files stored on disk
+ - includes their auto-start state
+ - when we desire a service to startup on boot, we enable it by changing the on disk configuration
+	an autostart flag
+ - another flag you may see called mask
+	when a service is masked, it's impossible to start
+	the list-unit-files subcommand lists these unit files as well
+
+systemctl status
+ - shows the status of a specified unit file, or the system status if one isn't specified
+ - you can also pass a PID #, it will tell you which unit the process belongs to
+
+systemctl list-unit-files -t service
+	list only service unit (config) files
+	q to quit
+
+systemctl list-units -t service
+	list running services
+	including -a will also show enabled non-running services
+		this would be services that are configured to start on boot but aren't currently running
+
+systemctl list-units -at service --state running
+	only show actively running services
