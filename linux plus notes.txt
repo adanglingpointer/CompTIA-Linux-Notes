@@ -1369,3 +1369,90 @@ systemctl list-units -t service
 
 systemctl list-units -at service --state running
 	only show actively running services
+
+systemctl cat rsyslog
+	print service config file
+	works for .service files, others you must specify extension
+
+systemctl status rsyslog
+	status of the service
+
+==========
+
+Manage systemd services
+-----------------------
+
+systemctl process options:
+ - start
+ - stop
+ - restart
+	these options do not survive a system reboot
+
+systemctl persistence options
+ - enable
+ - disable
+ - mask
+ - unmask
+	enabling & disabling configure whether a service starts at boot
+	masking keeps a service from starting either manually or automatically
+	these changes survive a reboot
+
+sudo systemctl stop atd
+systemctl list-units | grep atd
+systemctl status atd
+	check status
+sudo systemctl restart atd
+
+systemctl is-active atd
+	prints if service is active
+systemctl is-enabled atd
+	prints if service is enabled
+
+each of these subcommands will return a zero value to the $? variable
+ if the service in question is active, failed, or enabled
+
+echo $?
+	// 0
+
+sudo systemctl mask atd
+	prevent atd from running either automatically or manually
+sudo systemctl unmask atd
+
+==========
+
+make systemd services persistent
+--------------------------------
+
+sudo systemctl disable atd
+sudo systemctl enable atd
+
+==========
+
+job scheduling
+--------------
+
+types of schedules jobs:
+ - one-time AT jobs
+ - one-time batch jobs
+ - recurring user jobs
+ - recurring system jobs
+ - systemd timers
+
+one-time AT jobs
+ - created by users and run once at a certain time
+ - provided by the atd service
+
+one-time batch jobs
+ - created by users and run once at a certain time, but only if there are enough available system resources
+ - provided by the atd service
+
+recurring user jobs
+ - created and managed by users and run on a repeating schedule
+ - provided by the crond service
+
+recurring system jobs
+ - created by the system administrator and run by the operating system on a repeating schedule
+ - provided by the crond service
+
+systemd timers
+ - created by the system administrator and run by the operating system on a repeating schedule
