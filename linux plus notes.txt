@@ -1456,3 +1456,143 @@ recurring system jobs
 
 systemd timers
  - created by the system administrator and run by the operating system on a repeating schedule
+ - systemd timers - systemd equivalent to recurring cron jobs
+ - advantages such as logging through systemd journal, and dependencies
+ - however, systemd timers are more complicated to create and manage
+ - provided by the systemd service
+
+job access control
+ - provides a mechanism to allow or deny users permission to create and manage jobs
+ - can be configured for any of these job scheduling systems using a variety of different technologies
+
+==========
+
+one-time jobs using at and batch
+--------------------------------
+
+ - the AT service runs jobs at a certain time,
+ or in the case of a batch job - when the CPU load average drops below 0.8
+
+at <time>
+
+AT time formats:
+ - 4:25am
+ - 16:45
+ - midnight
+ - noon
+ - teatime
+	4pm
+ - now +2 hours
+ - now +2 days
+ - 4pm +3 days
+
+AT specific date formats:
+ - 3am tomorrow
+ - January 15 2025
+ - 011525
+	month day year
+ - 01/15/25
+ - 01.15.25
+
+AT combined time and date formats
+ - at 12:30 011522
+	[hh:mm MMDDYY]
+ - at -t 202501151230.30
+	[CCYYMMDDhhmm.ss]
+
+at now +5min
+	now it will ask for commands to run
+atq
+	show all AT jobs queued
+	alternative command: at -l
+at -c 1
+	show contents of AT job 1, including the shell environment
+atrm 1
+	remove/cancel AT job 1
+
+The difference between AT jobs and Batch jobs?
+	Batch job runs only if the system load average is below 0.8
+
+batch
+	now it will ask for the commands to run
+	ctrl+d when done entering commands
+atq
+	will also show batch jobs
+	if you don't see any, it means the batch job ran
+
+==========
+
+About cronjobs
+--------------
+
+a cronjob is stored in a cron table or cron tab
+
+Types of cronjobs
+ - user cronjobs
+	- specific to each user
+	- managed by users
+	- stored in /var/spool/cron/<user>
+ - system cronjobs
+	- systemwide
+	- managed by root
+	- run by the operating system
+	- stored in /etc/cron.d
+
+crontab format
+	45	23	*		*		6		/home/user1/bin/backup.sh
+	minute	hour	day (of month)	month (of year)	day of week	command to run
+	[0-59]	[0-23]	[1-31]		[1-12]		[0-7]
+							0 & 7=sunday
+					[jan-dec]	[sun-sat]
+
+with a system crontab, you can also specify user to run command as
+	45	23	*		*		6	root	/home/user1/bin/backup.sh
+								[user]
+
+* = every minute
+15,30,45 = on minutes 15,30,45
+15-45 = a range, runs every minute from 15-45
+*/10 = step values, run every 10th minute (skipping the nine in-between)
+1-59/2 = run on every odd minute
+
+online crontab generator - https://crontab-generator.org
+man 5 crontab
+
+==========
+
+systemd timers
+--------------
+
+ - systemd allow you to define timer units
+ - systemd timers are a powerful alternative to cron jobs
+
+systemd timer unit types
+ - real-time timers
+	- activated on calendar events
+	- act similar to cron jobs
+	- start based on a date and time value
+ - monotonic timers
+	- activated after a time span relative to a starting point
+		examples: five minutes after boot, 30 seconds after login
+
+advantages of systemd timers (over cronjobs)
+ - main benefits come from each job having its own service file
+ - jobs can be started independently of their timers
+ - jobs can run in their own environments
+ - jobs can be attached to cgroups
+	(container groups)
+ - jobs can have dependencies (on other systemd units such as network)
+ - jobs are logged in the systemd journal
+
+advantages of cronjobs
+ - easier to create
+ - built-in support for emailing on job failure
+	can be simulated with systemd timers however
+
+ - systemd timers are named with a .timer extension and have a matching .service file
+	backup.timer & backup.service, where the timer activates the service
+
+systemctl list-timers
+	list systemd timers
+	lists when timer last ran and when it runs again,
+	 as well as the timer unit name and the service unit that it activates
