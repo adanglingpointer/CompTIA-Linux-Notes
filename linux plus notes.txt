@@ -1596,3 +1596,166 @@ systemctl list-timers
 	list systemd timers
 	lists when timer last ran and when it runs again,
 	 as well as the timer unit name and the service unit that it activates
+
+-
+
+example of a service file:
+backup.service
+
+[Unit]
+Description=System Backup
+
+[Service]
+Type=simple
+ExecStart=/root/bin/systembackup.sh
+
+[Install]
+WantedBy=multi-user.target
+
+-
+
+example of a time file:
+backup.timer
+
+[Unit]
+Description=System backup every day at 2 AM
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Unit=backup.service
+
+[Install]
+WantedBy=multi-user.target
+
+-
+
+ - using OnCalendar we're creating a real-time timer
+ - we have other keywords besides OnCalendar that will allow us to create monotonic timers
+
+keywords for monotonic timers:
+ - OnActiveSec
+	relative to the moment the timer is activated
+ - OnBootSec
+	relative to when the machine booted up
+ - OnStartupSec
+	relative to when systemd was started
+ - OnUnitActiveSec/OnUnitInactiveSec
+	relative to when the unit the timer is activating was last activated/stopped
+ - RandomizedDelaySec
+	specify a random amount of time in which it should activate the service unit
+
+-
+
+monotonic timer:
+
+[Unit]
+Description=Run weekly and on boot
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=1w
+
+[Install]
+WantedBy=timers.target
+
+==========
+
+Analyze system processes and optimize
+-------------------------------------
+
+ - /prov/cpuinfo
+ - uptime
+ - loadaverage
+
+sysstat tools:
+ - sar - collects and displays all system activities
+ - sadf - generates report in CVS, XML, and others
+ - iostat - generates CPU and IO statistics
+ - mpstat - displays CPU statistics
+ - pidstat - reports statistics on process ID
+
+ - ksrar - not part of sysstat; Java GUI to display SAR reports
+
+tuning the kernel:
+ - sysctl - kernel-tuning tool
+ - tuned - kernel-tuning service
+	not mentioned on Linux+, but proc says it's a better way of managing custom kernel parameters
+
+troubleshoot memory issues:
+ - vmstat - processes, memory, paging, block IO, traps, disks, and CPU activity
+ - free - shows free memory
+ - /proc/meminfo - memory statistics
+
+process states:
+ - zombie
+ - uninterruptible sleep
+ - interruptible sleep
+ - running
+
+process priorities:
+ - nice - sets initial process nice level
+ - renice - changes process nice level
+ - top - allows changing process nice level interactively
+
+ending processes:
+ - kill signals
+ - kill - kills by PID
+ - killall - kills by name
+ - pkill - kills by pattern
+
+process information:
+ - ps - list processes
+ - lsof - lists files open by running processes
+ - pgrep - searches for processes
+
+==========
+
+troubleshoot applications and hardware
+--------------------------------------
+
+ - in any operating system with SELinux in enforcing mode, there may be context violations for applications
+ - if you have a graphical interface you may be notified in there's been a biolation
+	and an application has been restricted
+ - if you don't get a notification you can always run sealert, which will bring up the SELinux alert browser,
+	the GUI tool that shows violations
+
+ - sudo ausearch -m avc -ts today
+	you can also search the auto logs by using ausearch
+ - sudo ausearch -m avc -ts recent
+	within the last 10 minutes
+ - aureport
+	produces summary reports of the audit log activity
+ - /var/log/audit/audit.log
+	you can elevate privileges and view the audit log directly
+
+permission troubleshooting:
+ - ls -la
+ - getfacl
+	view file access control list
+look for
+ - user permissions
+ - group ownership
+ - executable permissions
+ - inheritance from an ACL
+
+mount options:
+ - mount
+	the mounted volume may not allow executables, or in special cases,
+	 may not allow SUID or SGIF programs to elevate their privileges
+	 noexec, nosuid, noguid
+
+check logs:
+ - journalctl
+	view system journal
+ - /var/log/messages
+	may change depending on the distribution
+ - sudo strace <program> 2>&1 | grep <search>
+	strace allows us to watch a program run to see what the issue may be
+	we can look at which libraries it loads and which configuration files it uses
+	strace outputs on both standard out and standard error, so you'll need to search the stderr to find problems
+
+hardware troubleshooting:
+ - lshw
+	list all hardware
+ - dmidecode
+	see low level hardware that the BIOS sees
