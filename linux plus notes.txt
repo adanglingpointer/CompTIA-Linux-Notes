@@ -1555,6 +1555,19 @@ with a system crontab, you can also specify user to run command as
 */10 = step values, run every 10th minute (skipping the nine in-between)
 1-59/2 = run on every odd minute
 
+-*-
+A system cronjob with a time and date fields of 0 1 * * * would run the task every day at 1:00 AM. The five fields in the cron schedule expression represent:
+
+Minute (0 - 59)
+Hour (0 - 23)
+Day of the month (1 - 31)
+Month (1 - 12)
+Day of the week (0 - 7) (where both 0 and 7 mean Sun, 1 = Mon, 2 = Tue, etc)
+In your case, 0 1 * * * means the task will run when the minute is 0 and the hour is 1, which is 1:00 AM, and the * in the other fields means “any”, so it will run regardless of the day of the month, the month, or the day of the week. Therefore, the task will run every day at 1:00 AM.
+-*-
+
+Users can create cronjobs by using the crontab command.
+
 online crontab generator - https://crontab-generator.org
 man 5 crontab
 

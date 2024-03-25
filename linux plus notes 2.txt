@@ -1,0 +1,117 @@
+Linux networking overview
+-------------------------
+
+there are a certain number of items that need to be configured in order for Linux to have functional networking
+ - a host address
+	usually this is an IPv4 or IPv6
+ - network subnet mask
+	to define the network
+ - default gateway router address
+	so traffic can leave the local network
+ - hostname
+	to identify your host
+ - name resolution
+	so you can refer to other hosts by name instead of needing to remember IP addresses
+	this could be local name resolution, or through a remote server such as DNS
+
+the network configuration can be set dynamically via the dynamic host configuration protocol
+ or by using IPv6
+DHCP or set live configuration manually
+
+There are two sets of tools for configuring a live network configuration manually:
+ - net-tools (legacy)
+	these tools include arp, hostname, ifconfig, route, and netstat
+	most distros still allow you to install them
+	they are still prevelant, however they have been obsoleted by iproute2
+ - iproute2
+
+manual saved config
+ - Red Hat 8 and older:
+	/etc/sysconfig/network-scripts/
+ - Debian
+	/etc/network/interfaces
+ - SUSE
+	/etc/sysconfig/network
+
+Network Manager
+ - network service
+ - a unified system for configuration of network interfaces
+ - started in 2004 by Red Hat
+ - CLI and graphical interface
+
+==========
+
+prepare for linux networking
+----------------------------
+
+in virtualbox, we can create a second adapter, as internal network
+creating the same network name for two VMs will provide us with an internal network accessible only between them
+
+==========
+
+configure live network connections
+----------------------------------
+
+ - host address
+ - network subnet
+ - default gateway
+
+these two are saved into files:
+ - hostname
+ - name resolution
+
+net-tools & iproute2
+
+Legacy Network Interface Naming
+
+Type		Name
+----		----
+Ethernet	eth0, eth1
+Wireless	wlan0, wlan1
+
+the number was the order in which the machine scanned them
+although simple, it meant the network device name could change depending on the order your machine saw the hardware
+now the naming is more complex looking but more reliable
+
+Consistent Network Interface Naming
+
+Type and Location			Name
+-----------------			----
+Ethernetl device, PCI bus 0, slot 3	enp0s3
+Wireless device, PCI bus 3, slot 0	wlp3s0
+
+-
+
+Legacy net-tools	iproute2 equivalent
+----------------	-------------------
+arp			ip neighbor
+ifconfig		ip address
+iptunnel		ip tunnel
+mii-tool		ethtool
+netstat			ss
+
+ifconfig
+	get network interface names with net-tools
+ip -s addr
+	the iproute2 command to list your network interfaces
+
+route
+	get the default gateway with net-tools
+ip route
+	get the default gateway with iproute2
+
+sudo mii-tool enp0s8
+	interfaces at hardware level via net-tools
+sudo ethtool enp0s8
+	interfaces at hw level via iproute2
+	speed, duplex, and if cable (link detected) is plugged in
+
+the Address Resolution Protocol (ARP) is used for associating a hardware address like the Max address
+ with a host address like an IP address
+
+arp
+	net-tools command for showing which IP address is associated with which hardware address
+	 and the network interface name
+ip neighbor [shortened to ip neigh, or ip n]
+	iproute2 for showing hw address
+	more reliable than arp
