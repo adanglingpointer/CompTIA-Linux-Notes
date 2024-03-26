@@ -115,3 +115,189 @@ arp
 ip neighbor [shortened to ip neigh, or ip n]
 	iproute2 for showing hw address
 	more reliable than arp
+
+Enable network interface:
+ net-tools: ifconfig enp0s8 up
+ iproute2: ip link set dev enp0s8 up
+
+Disable network interface:
+ net-tools: ifconfig enp0s8 down
+ iproute2: ip link set dev enp0s8 down
+
+Config networking:
+ net-tools: sudo ifconfig enp0s8 172.16.25.125 netmask 255.255.255.0
+ iproute2: sudo ip addr add 172.16.25.125/24 dev enp0s8
+	shortened: sudo ip a a 172.16.25.125/24 dev enp0s8
+
+The ip command by default uses CIDR addressing for the subnet mask, so provie it in bits such as /24 .
+With ifconfig you're setting the IP address;
+ if you need another address you need to create an alias for the interface.
+With the ip command you're setting an IP address, and can add another to the interface.
+You can remove addresses with ip, using delete instead of add.
+
+Add a network route:
+ net-tools: route add -net 192.168.1.0 netmask 255.255.255.0 dev eth0
+ iproute2: ip route add 192.168.1.0/24 dev eth0
+
+Add a default gateway:
+ net-tools: route add default gw 192.168.1.1
+ iproute2: ip route add default via 192.168.1.1
+
+netstat -neopa
+	Gather network statistics; numeric addresses with extended info including network timers, program IDs,
+	 and both listening and non listening ports.
+	Uses net-tools package
+ss -neopa
+	The iproute2 equivalent
+
+==========
+
+Configure saved network connections
+-----------------------------------
+
+Legacy Linux Network Configurations
+
+ - Debian -	/etc/network/interfaces
+	includes the configuration for all interfaces
+
+Debian Network Config:
+
+//
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+	address 172.16.25.125
+	netmask 255.255.255.0
+	gateway 172.16.25.1
+iface eth0 inet6 static
+	address 2001:DB8:1:3::1
+	netmask 56
+	gateway 2001:DB8:1::
+//
+
+ - SUSE -	/etc/sysconfig/network/ifcfg-*
+ - Red Hat -	/etc/sysconfig/network-scripts/ifcfg-*
+
+Most distributions that use Network Manager have moved to a new file format called a key file.
+That includes Red Hat Enterprise Linux, SUSE, and Debian.
+
+sudo NetworkManager --print-config
+	view Network Manager configuration
+	config file may be located such as /etc/NetworkManager/NetworkManager.conf
+
+Enterprise Linux will look first for a key file for the interface,
+ and then switch to ifcfg files if it doesn't fine one.
+Debian will look for its /etc/network/interfaces file first and then for key files second.
+SUSE only looks for key files.
+
+Key files: /etc/NetworkManager/system-connections/
+
+-
+
+ifcfg file:
+
+dhcp-
+
+//
+NAME="Wired Connection 1"
+UUID=770b2b71-a0f3-3904-904a-87b6899f3f1e
+
+DEVICE=enp0s3
+BOOTPROTO=dhcp
+ONBOOT=yes
+//
+
+manual config-
+
+//
+NAME="Wired connection 1"
+UUID=3f719ac-d819-4af7-911b-287209b49fab
+ONBOOT="yes"
+DEVICE="enp0s8"
+
+IPADDR0=172.16.25.125
+PREFIX0=24
+#NETMASK=255.255.255.0
+GATEWAY0=172.16.25.1
+DNS1=4.2.2.2
+PEERDNS="no"
+BOOTPROTO="none"
+
+IPV6INIT="yes"
+IPV6_ADDR_GEN_MODE="stable-privacy"
+IPV6_AUTOCONF=yes
+//
+
+-
+
+NetworkManager keyfile:
+
+dhcp-
+
+//
+[connection]
+id=Wired Connection 1
+uuid=770b2b71-a0f3-3904-904a-87b6899f3f1e
+
+type=ethernet
+autoconnect-priority=-999
+interface-name=enp0s3
+timestamp=1668541060
+
+[ethernet]
+
+[ipv4]
+method=auto
+//
+
+manual config-
+
+//
+[connection]
+id=Wired conneciton 1
+uuid=3f719ac-d819-4af7-911b-287209b49fab
+type=ethernet
+interface-name=enp0s8
+
+[ethernet]
+[ipv4]
+address1=172.16.25.125/24,172.16.25.1
+dns=4.2.2.2;
+ignore-auto-dns=true
+method=manual
+
+[ipv6]
+addr-gen-mode=stable-privacy
+method=auto
+//
+
+-
+
+The gloval DNS name server file is /etc/resolve.conf
+However, you can ensure the specified servers are specified to each interface.  To keep these DNS servers interface
+ specific, you need to set PEERDNS to "no" in the ifcfg file or in the key file set ignore-auto-dns to true.
+If you change PEERDNS to yes, or ignore-auto-dns defaults then these DNS servers are copied to the
+ /etc/resolve.conf file and become global.
+
+Linux network file documentation
+ - ifcfg
+	https://developer-old.gnome.org/NetworkManager/stable/nm-settings-ifcfg-rh.html
+ - NetworkManager keyfiles
+	https://developer-old.gnome.org/NetworkManager/stable/nm-settings-keyfile.html
+
+NetworkManager reload connection:
+ nmcli con reload
+
+In the past, you'd edit hostname via file /etc/hostname, and view hostname using the hostname command.
+A better way to do this:
+ sudo hostnamectl set-hostname rhhost1.localnet.com
+View hostname:
+ hostnamectl
+
+Name resolution can be done either locally via a static file, or remotely through DNS.
+The other in which name resolution happens is defined in the /etc/nsswitch.conf file.
+	The 'hosts' line of this file defines the order in which name resolution happens.
+
+hosts:	files dns myhostname
