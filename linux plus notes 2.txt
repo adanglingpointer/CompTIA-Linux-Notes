@@ -301,3 +301,102 @@ The other in which name resolution happens is defined in the /etc/nsswitch.conf 
 	The 'hosts' line of this file defines the order in which name resolution happens.
 
 hosts:	files dns myhostname
+	First the system looks at local files (/etc/host), then config'd DNS server, finally nss-myhostname
+	 functionality that resolves names locally such as localhost.
+
+For local name resolution add entries to the /etc/host file
+
+-
+
+/etc/host file example:
+
+//
+127.0.0.1	localhost	localhost.localdomain	localhost4	localhost4.localdomaon4
+
+192.168.2.100	rhhost1.localnet.com	rhhost1
+//
+
+IP		FQDN			alias
+
+-
+
+Editing the interface specific configuration files have lines for DNS.
+If you want the DNS service to be global then place them in the /etc/resolve.conf file.
+
+==========
+
+Configure networking with NetworkManager
+----------------------------------------
+
+NetworkManager:
+ - dynamic
+ - control daemon
+ - configuration daemon
+ - keeps network connections up
+ - allows manual configuration
+
+NetworkManager comes with four different programs to configure the network:
+ - ncmli
+	command line
+ - nmtui
+	text user interface
+ - control-center
+	graphical config tool
+ - nm-connection-editor
+	a graphical user interface tool for certain tasks not yet handled by the control center
+
+
+Control Center
+ - can be opened as 'Network' application from overview mode,
+	or from Wired Settings from top right network menu
+
+nm-connection-editor
+ - it's a GUI tool, but must be opened in terminal first with
+	nm-connection-editor
+ - has more power than control center
+ - can create new connections such as Bluetooth, Bridge, IP tunnel, and VLAN
+
+nmtui
+ - can be used to edit a connection, activate a connection, or set system hostname
+
+nmcli
+ - nmcli networking sub command managed system-wide networking settings, not specific to interfaces
+	 - nmcli general status
+	 - nmcli networking connectivity
+	 - nmcli radio wifi on
+	 - nmcli monitor
+		watch changes in connectivity, devices, or connection profiles
+	 - nmcli connection monitor
+	 - nmcli device monitor
+	 - nmcli connection show
+		can be shortened:	nmcli con show
+					nmcli c show
+					nmcli c s
+ - show connection statistics
+ - activate/deactivate interface
+ - add/delete interface
+ - modify a connection
+ - edit connection interactively
+ - clone a connection
+ - monitor connections
+ - reload all connections
+ - load an ifcfg file
+ - import/export VPN connections
+ - nmcli device subcommand allows you to manage the network interface itself
+	 - nmcli device wifi list
+	 - nmcli device wifi rescan
+	 - nmcli device wifi hotspot
+ - man nmcli
+	last page has examples
+ - man nmcli-examples
+
+nmcli con show --active
+	show all active connections
+nmcli con show
+	show all connections
+nmcli con up 'Wired connection 1'
+	bring up wired connection 1
+nmcli con up ifname enp0s8
+	bring up connection by interface name
+
+nmcli con add con-name internal-eth ifname enp0s8 type
