@@ -399,4 +399,152 @@ nmcli con up 'Wired connection 1'
 nmcli con up ifname enp0s8
 	bring up connection by interface name
 
-nmcli con add con-name internal-eth ifname enp0s8 type
+nmcli con add con-name internal-eth ifname enp0s8 type ethernet ip4 172.16.25.125/24 gw4 172.16.25.1
+	create new connection profile for enp0s8
+nmcli con up internal-eth
+	bring up network
+nmcli con show
+	verify it's up
+
+nmcli con edit
+	interactive tool that gives possible options
+
+==========
+
+Troubleshoot DNS client issues
+------------------------------
+
+/etc/nsswitch.conf
+
+host line defines how DNS is read
+hosts:	files dns myhostname
+
+files = /etc/hosts
+
+global DNS servers = /etc/resolv.conf
+
+another place where DNS servers are configured is in the network interface specific config files
+Enterprise Linux -	/etc/sysconfig/network-scripts/ifcfg*
+	for example	/etc/sysconfig/network-scripts/ifcfg-eth0
+
+ifcfg DNS entries:
+	PEERDNS=no
+	DNS1=8.8.8.8
+
+if PEERDNS is set to yes, then the entry will get copied to the /etc/resolv.conf file
+
+dig @192.168.1.254 ford.com
+	resolve ford.com with 192.168.1.254 nameserver
+
+==========
+
+Monitor the network and remediate
+---------------------------------
+
+there may be issues with any number of different areas
+ - routing
+ - network saturation
+ - packet drops
+ - timeouts
+ - name resolution
+ - network adapters
+ - network interface configurations
+
+routing issues
+ - route
+ - netstat -r
+ - ip route
+
+troubleshoot packet hops
+ - nmap
+ - traceroute
+ - tracepath
+ - mtr
+
+ - arp
+	to verify that local switching is working well and that you don't have a corrupted ARP table
+
+troubleshoot network saturation
+ - iftop
+ - ipperf
+
+troubleshoot packet drops and timeouts
+ - ping
+	ensure connectivity
+ - tcpdump
+	look for dropped packets and timeouts
+	packet analysis from command line
+ - Wireshark
+	GUI
+ - netcat
+	read data from network stream
+
+troubleshoot name resolution
+ - nslookup
+	legacy systems
+ - dig
+ - host
+ - whois
+
+troubleshoot network adapters
+ - ethtool
+ - nmcli
+	configure or save network configurations
+ - ip
+	configure live network settings (not persistent)
+ - ifconfig
+	legacy
+
+-
+
+What is the network interface configuration file for the eth0 interface in Enterprise Linux?
+	/etc/sysconfig/network-scripts/ifcfg-eth0
+
+When troubleshooting DNS problems what does analysing the */etc/nsswitch.conf* file accomplish?
+	The nsswitch.conf file doesn't determine the order in which DNS servers are queried.
+	The nsswitch.conf file lists name resolution sources and determines which order each is queried. If DNS isn't listed then it won't query a DNS server.
+
+==========
+
+User and group overview
+-----------------------
+
+Linux user types
+ - non-login users
+	used to run system services
+ - login users
+	super user (root)
+	regular users (unprivileged)
+
+Linux groups
+ - users can be added to groups
+ - access control is configured for the entire group
+ - every user has a name
+ - every user has an ID
+ - every user must belong to at least one group
+ - every user automatically belongs to a primary group
+ - the primary group has a name and ID number
+	the user's primary group has the same name as the user
+	the primary group ID # is often the same as user ID #, but doesn't have to be
+
+User name:		bob
+User ID:		1001
+Primary group name:	bob
+Primary group ID:	1001
+
+when a user creates a file, it has a user owner and a group owner
+if bob created a file, the user owner would be bob and the group owner would be bob's primary group
+
+User name:		charlie
+User ID:		1002
+Primary group name:	charlie
+Primary group ID:	1002
+
+User owner:		charlie
+Group owner:		charlie
+
+legacy systems: all users are in one user group
+The problem with all users belongong to the same group is that the files they create will be accessible by each
+ other, because they'll all be owned by the user's group, which all users belong to.
+This creates security holes and grants users access to files created by other users.
+
