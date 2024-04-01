@@ -548,3 +548,109 @@ The problem with all users belongong to the same group is that the files they cr
  other, because they'll all be owned by the user's group, which all users belong to.
 This creates security holes and grants users access to files created by other users.
 
+ - users have only one primary group
+ - users can belong to more supplementary groups
+ - groups cannot contain other groups
+ - a user must have a password to login
+	or encrypted keys
+ - user and group names are case sensitive
+
+==========
+
+User account files
+------------------
+
+ - all local user account info is stored in /etc/passwd
+ - one user per line
+ - seven columns delimited by colons
+
+root:x:0:0:root:/root:/bin/bash
+1    2 3 4 5    6     7
+
+1 - username
+2 - encoded password
+	if the system is using the Shadow Suite, there will be an x as a placeholder
+	 saying that the password is encoded and is not stored in this file.
+	it's extremely rare for any modern Linux distributions to not use a Shadow Suite
+	 so this column usually has an x in it.
+	this used to contain a one-way hash
+3 - numeric user ID
+	system accounts user user IDs between 1 and 999
+	 root and system service accounts
+	non-admin user account IDs start at 1000
+	 in older Linux systems they started at 500
+	 can be configured in /etc/login.defs
+4 - numeric group ID
+	primary group
+	we can find the name of the primary group by cross-referencing this number in the /etc/group file
+5 - GECOS comment field
+	General Comprehensive Operating System created by General Electric in the 1960s
+	store info about user here
+6 - home directory
+	/root for root
+	/home/username for everyone else
+	 this can be configured in /etc/default/useradd, or with 'useradd -D'
+7 - login shell
+	the default in Enterprise Linux and many others is /bin/bash
+
+ - one-way hash - mathematical function that takes a variable-length input string and converts it 
+	to a fixed-length binary sequence
+ - only root can access /etc/shadow
+
+cat /etc/shells
+	print out installed shells
+sudo dnf search shell
+	find some installable shells
+	 dash, fish, ksh, zsh
+
+==========
+
+User password file
+------------------
+
+ - with the Shadow Suite installed, all encoded passwords are stored in /etc/shadow file
+	which is readable by one one but root
+ - contains password and account aging information
+
+user1:$6$vUdt/Qgy6$KN.L!@G9l0o3.VhUhw65ehu.:18818:0:99999:7: : :
+1     2                                     3     4 5     6 7 8 9
+
+1 - username
+2 - encoded password
+	this will be one or more ! if the password has not been set, or if the account is locked
+	$6$ = hash algorithm, the characters in between dollar signs denote the hash type
+	vUdt/Qgy6$ = cryptographic salt
+	KN.L!@G9l0o3.VhUhw65ehu = encoded password
+3 - days since password was changed
+	this is listed as the number of days since January 1, 1970
+	if this number is 0, the user should change password next time they login
+4 - days before password can be changed
+	0 = may be changed at any time
+5 - days until password must be changed
+	99999 = 274 years
+6 - days to warn before expiring
+7 - grace period
+	number of days after the password expires that the password is still accepted
+8 - account expiration date
+	this is listed as the number of days since January 1, 1970
+9 - reserved for future use
+
+ - hash types - linux supports multiple different hashing algorithms
+
+Prefix	Hash Type
+1	MD5		not recommended anymore
+2a	Blowfish
+2y	Blowfish
+5	SHA-256
+6	SHA-512
+
+ - password hash type can be changed with authconfig command, or by editing /etc/pamd.d/password-auth file
+	sudo authconfig -passalgo sha512
+
+ - salt - random data that is used as additional input to a one-way hash
+	- new salt generated for each password
+
+changing account defaults
+	- /etc/login.defs
+	- authconfig
+	- chage
