@@ -654,3 +654,145 @@ changing account defaults
 	- /etc/login.defs
 	- authconfig
 	- chage
+
+==========
+
+Group accounts and passwords
+----------------------------
+
+ - multiple users can be managed as one group
+ - OS groups are stored in the /etc/group file
+
+wheel:x:10:user
+1     2 3  4
+
+1 - group name
+2 - group password
+	if a group is given a password, it will be stored in the /etc/gshadow file
+3 - group ID
+	non-admin group ID starts at 1000
+	any group with an ID under 1000 belongs to the root user or system services
+4 - group members, separated by columns
+
+group account passwords: /etc/gshadow
+
+user1:!: :
+1     2 3 4
+
+1 - group name
+2 - group password
+	any user with the correct password can switch to the new group
+	 newgrp sales
+	if the password is empty, only members of the group can switch to it and will not be prompted for a password
+	if the field starts with an ! then the group is restricted and only members of the group can switch to it
+	 after they enter a password
+	in these cases, the new group with become the user's primary group.
+3 - group admins separated by commas
+	group admins can change the group password or members of the group
+4 - group members
+
+groups
+	this command shows you what groups you belong to
+	left most group is the primary group
+	files that are created by the user will be owned by them and their primary group
+
+==========
+
+Create and delete users
+-----------------------
+
+user account data files
+
+Config Items			File
+User accounts			/etc/passwd
+Passwords, account aging	/etc/shadow
+Account defaults		/etc/login.defs
+				/etc/default/useradd
+Skeleton directory		/etc/default/useradd
+
+ - the skeleton directory contains the files that are copied to each new user's home directory automatically
+
+useradd command
+ - create user accounts
+ - configure user defaults
+ - set basic account aging
+ - specify custom user configurations
+
+Option	Function
+-d	User's home directory
+-u	User ID
+-g	Primary group ID
+-G	Supplementary group(s)
+-s	Default shell
+
+Account Aging Options
+Option	Function
+-e	Account expiration
+-f	Account inactive period
+
+account inactive period = the number of days after an account expires before it's disabled
+
+ - these parameters are set when first creating a user
+ - the change command has more power when configuring account aging for existing users
+
+Administration Options
+Option	Function
+-r	Creates a system account
+-p	Encrypted password
+-M	Does not create a home directory
+-N	Does not create a primary group
+-k	Specifies a custom skeleton directory
+
+ - useradd will not encrypt the password
+	that has to be done with another program, then pasted here
+
+sudo useradd
+	with no options, it will print all available options
+sudo useradd bob
+	create a new user, bob
+sudo passwd bob
+	change password for bob
+sudo userdel bob
+	delete bob but keep their home directory and their files
+sudo userdel -r bob
+	delete bob and his home directory
+
+==========
+
+Modify user accounts
+--------------------
+
+ - most of the syntax for the usermod command is identical to that of useradd
+
+usermod command
+ - modify existing accounts
+ - lock and unlock accounts
+ - add users to supplementary groups
+ - move a user's home directory
+
+usermod User Options
+Option	Function
+-s	Changes shell
+-l	Changes user's name
+-u	Changes user ID
+-d	Changes user's home directory
+
+usermod Group Options
+Option	Function
+-g	Changes primary group ID
+-G	Adds to supplementary group(s)
+-a	Appends to existing list
+
+usermod Admin Options
+Option	Function
+-m	Moves user's home directory
+-L	Locks user account
+-U	Unlocks user account
+
+usermod Aging Options
+Option	Function
+-e	Account expiration
+-f	Account inactive period
+
+sudo usermod -u 1010 -g 1001 -s /bin/sh sally
+
