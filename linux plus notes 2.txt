@@ -795,4 +795,127 @@ Option	Function
 -f	Account inactive period
 
 sudo usermod -u 1010 -g 1001 -s /bin/sh sally
+	new user ID of 1010, new group ID of 1001, with new shell for sally
 
+==========
+
+Create and delete groups
+------------------------
+
+Group Info
+ - Groups have a name
+ - Groups have a numeric ID
+ - Users belong to one primary group
+ - Users can belong to multiple supplementary groups
+ - Groups can not contain other groups
+
+Supplementary Group Limits
+
+Operating System		Groups
+OpenBSD, macOS			16
+Linux kernel < 2.6.3		32
+Linux kernel >= 2.6.3		65536
+FreeBSD > 8.0			1023
+Oracle Solaris			1024
+Windows				1024
+
+getconf NGROUPS_MAX
+ - check the maximum number of supplemental groups that a user can belong to
+
+groups
+ - check which groups the logged-in user belongs to
+ - left most group is the primary group
+
+groups sally
+ - check which groups user sally belongs to
+
+id
+ - a bit more info: numeric group IDs as well as names
+
+id sally
+
+getent group wheel
+ - show all users that belong to the wheel group
+
+getent group
+ - list all groups
+ - the is the same output as viewing the /etc/group file with cat
+
+sudo groupadd -g 1050 accounting
+ - add the group accounting with group ID 1050
+
+cat /etc/group
+ - check groups
+
+sudo groupmod -g 1051 accounting
+ - users who have accounting as their primary group will have the primary group ID field updated in /etc/passwd
+ - however, any files that were owned by the group will need to be updated manually
+
+sudo groupdel accounting
+ - delete group accounting
+
+man groupmod
+
+==========
+
+Assign users to groups
+----------------------
+
+sudo groupadd sales
+ - create sales group
+
+sudo usermod -a -G sales sally
+ - add sally to sales group
+ - this is a very user-centric way to managing group membership, as it focuses on the user's information,
+	not the groups
+ -a = append
+	without this, all supplementary groups will be replaced
+ -G = supplemental groups
+
+sudo usermod -a -G sales,audio,wheel sally
+ - add sally to multiple supplementary groups
+
+sudo groups sally
+ - check groups sally belongs to
+
+sudo gpasswd -a sally sales
+ - this is a group-centric method
+ -a = add
+ - this adds sally to the sales group
+
+sudo gpasswd -d sally sales
+ - remove user sally from group sales
+
+ - user must log out and back in for change to be visible
+
+==========
+
+Become a super user
+-------------------
+
+ - logging in as root on the GUI opens the door the acquiring viruses
+ - if there are multiple admins then there will be no accountability
+ - a better practice is to only elevate privileges when necessary
+
+su command
+ -c = runs a command as the specified user
+ -g = runs a command as the specified group
+ - or -l = starts a login shell
+ -s = runs a command in the specified shell
+
+ - su authentication, account and session handling is provided by PAM
+	PAM - the Linux pluggable Authentication Module System
+ - su pam file is located at: /etc/pam.d/su
+
+/etc/pam.d/su example lines
+
+# Uncomment the following line to implicitly trust users in the "wheel" group
+#auth	sufficient	pam_wheel.so trust use_uid
+
+uncommenting this line will allow the users to su without entering a password
+
+# Uncomment the following line to require a user to be in the "wheel" group
+#auth	required	pan_wheel.so use_uid
+
+uncommenting this line will only allow users in the wheel group to use su
+	this is true even if they know the root password
