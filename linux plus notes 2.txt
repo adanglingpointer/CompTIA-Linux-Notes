@@ -919,3 +919,138 @@ uncommenting this line will allow the users to su without entering a password
 
 uncommenting this line will only allow users in the wheel group to use su
 	this is true even if they know the root password
+
+whoami
+	prints out user logged in as
+	'who I currently am'
+logname
+	prints out user that you were logged in as initially
+su root
+	type in root's password, to switch to root user
+
+ - a difference between logging in as root and switching to root is the environment
+ - the environment = the variables and system configuration that comes with a logged in user
+
+echo $PATH
+	list of directories that Linux will look through to find commands
+
+exit
+	exit the user logged in with using su
+
+su root
+	will use the original user's environment variables
+
+su - root
+	simiplified to su -
+	will inherit the root user's variables
+
+su - -c 'cat /etc/shadow'
+	execute cat as superuser without keeping you logged in as root
+
+sudo vs su ?
+
+==========
+
+Elevate group privileges
+------------------------
+
+sudo groupadd accounting
+	add a group named accounting
+sudo gpasswd accounting
+	create a password for the group
+sudo cat /etc/gshadow
+	view group password file
+newgrp accounting
+	switch primary group to accounting group
+sudo p
+
+ - if you want a user to be able to switch to a group without typing in the password, you just need to add them
+	to the group
+
+sudo gpasswd -a user1 accounting
+	add user1 to accounting group
+	now they won't be prompted for password when switching group
+		using newgrp accounting, for example
+
+ - when you run newgrp, bash replaces the current shell with a new shell
+ - you may notice that command history is not the same
+ - you can also verify this by viewing the shell level variable
+
+echo $SHLVL
+	print shell level
+
+exit
+	switch back to original primary group (or one shell back)
+	can be ran multiple times if nested within multiple shells (4 or more)
+
+ - a group administrator can change the group password and manage other members of the group
+
+sudo gpasswd -A user1 accounting
+	make user1 an administrator of the accounting group
+	now the third column in /etc/shadow will be the group administrator's name
+
+==========
+
+Elevate privileges using sudo
+-----------------------------
+
+ - commands with a Set User ID and Set Group ID bits allow a user to elevate privileges without even prompting for
+	a password
+
+Method		Authentication
+SUID/SGID	No password needed
+su		Needs root password
+sudo		Needs user password
+
+ - when using sudo, a user has to enter their own password
+ - this is far more desirable, as users never need to know the root password, keeping it safe
+
+sudo cat /etc/shadow
+	elevate privileges for that one command
+	sudo caches password for a short for convenience, keeping you from typing each time you run a command
+
+ - sudo has a configuration file, the sudores file, that can allow administrators to determine who gets to elevate
+	privileges and which commands they can run
+ - visudo only allows the file to be edited by one process at a time and opens it in vi
+
+sudo visudo
+	this configuration file allows you to group together users, hosts, and even commands,
+	 and then create access control rules, allowing certain users to run certain commands on certain hosts
+
+ - when sudo is using operating system groups you need to prefix the name with a percent symbol
+
+## Allows people in group wheel to run all commands on all hosts as all users
+%wheel	ALL=(ALL)	ALL
+
+ - in this case, adding a user to the wheel group gives that user full root privileges
+ - they could even change the root password or take away other admins' sudo rights
+
+escape :q!
+	quit visudo
+
+==========
+
+Manage sudo users
+-----------------
+
+ - Linux has the concept of users and groups but the most powerful tool for elevating privileges is sudo,
+	which has similar concepts of its own
+ - groups of users in sudo are called User Aliases
+ - when you want to assign admin rights to a group of users you can create a User Alias and place elevant
+	users in it
+
+sudo Aliases
+
+Alias		Function
+User_Alias	Groups users
+Runas_Alias	Groups run-as users
+
+Runas Alias = these are users that commands can be run as, for instance if files are owned by Apache, you might
+ want to run the web admin tools as Apache instead of root
+
+----------
+==========
+
+less
+touch
+ls -l
