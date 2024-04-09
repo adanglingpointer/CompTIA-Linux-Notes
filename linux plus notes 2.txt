@@ -1044,9 +1044,42 @@ sudo Aliases
 Alias		Function
 User_Alias	Groups users
 Runas_Alias	Groups run-as users
+Cmnd_Alias	Groups commands
+Host_Alias	Groups hosts
 
 Runas Alias = these are users that commands can be run as, for instance if files are owned by Apache, you might
  want to run the web admin tools as Apache instead of root
+Command Alias = for example, we could group all web admin commands together into web tools Command Alias
+Host Alias = for example, if we wanted to allow all web admins to access all web tools on all web servers
+	we'd group together web servers into a Host Alias
+
+sudo visudo
+	edit the sudoers file
+	we can add aliases in this file
+
+User_Alias DRIVEADMINS = user1
+Cmnd_Alias DRIVETOOLS = /usr/sbin/gdisk
+Host_Alias DRIVEHOSTS = rhhost1.localnet.com
+
+DRIVEADMINS	DRIVEHOSTS	=(ALL)		DRIVETOOLS
+User_Alias	Host_Alias	Runas_Alias	Cmnd_Alias
+
+Together it looks like
+DRIVEADMINS DRIVEHOSTS =(ALL) DRIVETOOLS
+
+If you want the DRIVEADMINS to be able to run these commands without a password, you can add add a tag between
+	the Runas_Alias and the Cmnd_Alias:
+DRIVEADMINS DRIVEHOSTS =(ALL) NOPASSWD: DRIVETOOLS
+	Other tags can be added after the :
+
+- Some text editors such as VI allow you to open a shell inside of them and run commands
+	Be careful of giving out sudo privileges to text editors.
+	If a user is able to elevate privileges while running VI they could run any command inside of it as root
+	or even edit any files.
+
+visudo will refuse to exit if syntax is wrong
+using a diff text editor to edit the sudoers file, and the syntax is wrong, then sudo won't operate
+	in that case you'll need to use su to fix it
 
 ----------
 ==========
@@ -1054,3 +1087,6 @@ Runas Alias = these are users that commands can be run as, for instance if files
 less
 touch
 ls -l
+which
+	find full path of a command
+	which gdisk
