@@ -1,0 +1,74 @@
+Linux storage system overview
+-----------------------------
+
+Types of Storage
+ - File storage
+ - Block storage
+ - Object storage
+
+File Storage
+ - Hierarchy of files in folders
+ - Data in files
+ - Metadata contains path to file
+ - Local file systems
+ - Network file systems - NFS (Network File System), CIF (Windows Common Internet Filesystem)
+
+Block Storage
+ - Exposes blocks of binary data
+ - Blocks have unique identifiers
+ - Storage system reassembles blocks
+ - Storage area networks (iSCSI)
+
+Object Storage
+ - Manages data
+ - Links data to associated metadata
+ - Data is stored in discrete objects
+ - Single repository
+ - Red Hat Ceph
+
+ATA Drives
+ - local drives in a legacy system
+ - Parallel ATA drive with a flexible ribbon cable with 80 wires
+ - Two drives per cable
+	To have more than two drives, a system needs multiple controllers
+ - Speed: 133 MB/sec
+ - /dev/hda, hdb
+
+SCSI Drives
+ - Small Computer System Interface
+ - higher end legacy systems
+ - Parallel SCSI drive with larger flat ribbon cable with 168 wires, used mostly for servers
+ - 16 drives per cable
+ - Speed: 320 MB/sec
+ - /dev/sda, sdb
+
+SATA Drives
+ - newer systems
+ - Serial ATA with narrow serial cable
+ - One drive per cable
+	Can be a spinning disk, or a Solid State Drive
+ - we measure serial interfaces with Bits per second instead of Bytes
+ - Speed: 6 Gbps
+ - /dev/sda, sdb
+
+SAS Drives
+ - Serial Attached SCSI
+ - Parallel SCSI was replaced by Serial Attached SCSI (SAS)
+ - Backward compatible with SATA
+ - Speed: 12 Gbps
+ - /dev/sda, sdb
+
+NVMe Drives
+ - Non-Volatile Memory Express
+ - no cable at all, plugs into slot like a memory stick
+ - The structure of the internal components is very similar to a solid state SATA drive,
+	the only difference being the interfaces direct via a PCI Express bus
+ - Speed: 32 Gbps
+ - /dev/nvme0n1p1
+	nvme followed by device number, namespace number, and partition number
+
+USB Drives
+ - Thumb drive
+ - SSD in USB case
+ - Speed: 5-20 Gbps
+ - /dev/sda, sdb

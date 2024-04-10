@@ -1081,6 +1081,29 @@ visudo will refuse to exit if syntax is wrong
 using a diff text editor to edit the sudoers file, and the syntax is wrong, then sudo won't operate
 	in that case you'll need to use su to fix it
 
+-
+
+The usermod command can be used to lock a user's password.
+The `-L` option will lock a user's password by prefixing it with `!!` in the */etc/shadow* file.
+
+What is one feature that makes sudo far more powerful than su for privilege escalation?
+Sudo allows allowing or denying privilege escalation per command and even per specific command option.
+
+What does sudo call a group of sudo users meant for assigning local access rights to?
+A User_Alias contains a list of users which can then be used to assign access control rules.
+
+All sudo access rules are in */etc/sudoers* or the */etc/sudoers.d* directory.
+
+What is one design shortcoming of the Linux user group system?
+Groups cannot belong to other groups.
+Not being able to nest groups can make systems comprised of many users more difficult to manage.
+
+To elevate privileges using the sudo command a user must enter their own password.
+This is one of sudo's advantages over other privilege escalation systems in Linux.
+
+
+
+
 ----------
 ==========
 
