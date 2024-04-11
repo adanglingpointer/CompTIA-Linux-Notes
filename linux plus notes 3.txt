@@ -72,3 +72,140 @@ USB Drives
  - SSD in USB case
  - Speed: 5-20 Gbps
  - /dev/sda, sdb
+
+Partitioning the drive = divide drive into smaller, more manageable sections
+OS	Users	Data
+
+ - Older BIOS space systems can only have 4 primary partitions with a maximum size of 2 TB
+	A later trick was developed to allow one of the four partitions to be made into an extended partition,
+	 and then divided again into a maximum of 12 logical drives.
+ - The BIOS partition table is stores in the master boot record in the first sector of the drive
+ - BIOS was replaced by the Unified Extensible Firmware Interface (UEFI)
+ - One of the improvements was the GUID Partition Table (GPT) which supports up to 128 partitions
+	with a total capacity of 9.4 Zetabytes (ZB)(9.4 billion Terabytes)
+
+ - Linux has the additional ability to combine partitions and drives into volume groups,
+	and divide the resulting group into smaller logical volumes
+ - This is called LVM
+
+[Part 1]		[Part 2]		[Part 3]
+↓			↓			↓
+			[Volume Group]
+↓			↓			↓
+[Logical Volume]	[Logical Volume]	[Logical Volume]
+
+ - New drives can be added to the volume group allowing you to increase the size of the logical volume without
+	taking it offline.
+ - Each logical volume acts as a flexible partitions.
+ - It also allows you to swap drives from underneath the logical volumes while they're being used.
+ - Unlike partitions, space utilized for logical volumes does not need to be continuous.
+
+ - Drives can also be combined into a RAID (Redundant array of independent disks)
+
+[Drive 1]	[Drive 2]
+↓		↓
+	[/dev/sda]
+
+ - RAID can be accomplished on Linux using LVM or the mdadmin tool
+
+ - Drives, partitions, logical volunes, and RAID devices can be combined in many different ways to solve your
+	storage needs.
+
+[Drive 1]	[Drive 2]	[Drive 3]	[Drive 1]	[Drive 2]	[Drive 3]
+↓		↓		↓			↓		↓		↓
+		[/dev/sda]					[/dev/sdb]
+		↓							↓
+				[Volume Group]
+				↓
+				[Logical Volume]
+				↓
+				[EXT4]
+
+ - The resulting device could be encrypted using LUKS for security [LUKS Encrypted Volume] (instead of EXT4),
+	or just formatted with a file system mounted on a directory to allow access
+	 [ext4 - /media/storage]
+
+Linux File Systems (current)
+ - ext4
+ - XFS
+ - Btrfs
+
+Legacy Linux File Systems
+ - ext2
+ - ext3
+	Added journal
+ - Maximum file size: 2 TB
+ - Maximum file system size: 16 TB
+
+ext4 File System
+ - Supports SSDs
+ - Maximum file size: 16 TiB
+ - Maximum file system size: 1 EiB (1 billion Gigabytes)
+ - ext2/ext3 can migrate to ext4 without reformatting
+
+FXS File System
+ - Default on Enterprise Linux from version 7
+ - 64-bit file system
+ - Created by Silicon Graphics for Unix
+ - Maximum file system size: 8 EiB
+
+Btrfs File System (pronounced butter FS)
+ - Created as a response to Sun Microsystems ZFS
+ - Supports:
+	- Partitioning
+	- RAID
+	- Logical volumes
+	- Snapshots
+	- Compression
+ - Maximum file size: 16 EiB
+
+ - When it comes to virtual memory, instead of using a page file stored on disk, Linux by default uses an
+	entire partition
+ - This provides a faster virtual memory interface that is not subject to fragmentation,
+	but does require a separate partition or logical volume.
+
+Specialty File Systems
+ - Enterprise Cryptographic File System (eCryptfs)
+	Applies POSIX-compatible encryption protocols to data before it's written to disk
+
+Non-Linux File Systems (supported by Linux)
+ - VFAT/exFAT (Microsoft)
+ - NTFS (Microsoft)
+ - HFS/HFS+ (Apple)
+ - ISO 9660/UDF (optical disks)
+ - ZFS (Sun Microsystems)
+
+ - There are licensing issues with some of these file systems, restricting them from being included in the kernel.
+ - They're handled in user space directly or through the FUSE file system, which acts as a bridge between the 
+	kernel and user-created file systems
+
+Kernel Space		User Space
+[Kernel]	↔	[FUSE]↔[ZFS]
+
+Remote File Systems (supported by Linux)
+ - SMB (Windows)
+ - CIFS (Windows)
+ - NFS (UNIX)
+
+==========
+
+Prepare for handling storage
+----------------------------
+
+To practice in VirtualBox
+
+ - Shut down VM
+ - Settings
+ - Storage
+ - Right click Controller: SATA
+ - Hard Disk
+ - Create
+ - Keep default of VDI
+ - For storage type keep default of dynamically allocated so it doesn't take up extra disk space
+ - For LVM and RAID exercises, you need a lot of drives, but they don't need to be very large so change the size
+	to 1 GB
+ - Also take note of the virtual disk name, i.e. rhhost1_1.vdi
+ - Click Finish
+ - Click Choose to attach to VM
+ - Create 3 more drives the same way, incrementing the name for each one
+ - Power VM back up again
