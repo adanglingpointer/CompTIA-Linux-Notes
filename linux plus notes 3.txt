@@ -284,3 +284,154 @@ cat /prov/partitions
  - Once you've created partitions, you can use them in LVM or format them directly using tools such as mkfs
  - Once you have formatted it, you can mount it
 
+==========
+
+Create partitions using parted
+------------------------------
+
+Older versions of parted could:
+ - resize partitions
+ - copy partitions
+ - move partitions
+ - format partitions
+ - rescue
+
+Some of these features were removed after version 2.4 including:
+ - check
+ - cp
+ - mkpartfs
+ - move
+ - resize
+
+ - gparted is a GUI tool, but is different from parted
+
+sudo parted
+	run parted in interactive mode
+help
+	show list of commands
+help print
+	show more info about a specific command such as print
+print
+	display the partition table, much like typing p in fdisk
+print all
+	print all drives and partitions, similar to fdisk -l
+print devices
+	a shorter more concise list drives
+select /dev/sdc
+	select a specific drive to edit
+print free
+	get stats on the drive and show free space
+mktable gpt
+	this is the same as 'mklabel'
+	created a GPT style partition table
+print
+	verify partition table was created
+mkpart primary 1MiB 500MiB
+	create a new 500 MB partition now they we have a partition table
+	the choice of type can be primary, extended, or logical
+	because we created a GPT partition table, all partitions will be primary
+quit
+	exit parted
+sudo udevadm settle
+	register the partition to let the kernel know that it has changed
+	you may not have to do this depending on which drive you're partitioning but it's a good practice
+cat /proc/partitions
+	verify that the kernel recognizes the new partition
+
+ - creating a bare/raw drive in Virtual Box will likely not have a partition table at all
+ - when you buy physical drives, usually they come with a partition table already
+ - once you've created partitions, you can use them in LVM or format them directly using disk formatting tools
+	such as mkfs
+
+==========
+
+Manage LVM volumes and volume groups
+------------------------------------
+
+Logical Volume Management (LVM)
+ - resizing volumes
+ - combining volumes
+ - moving volumes
+ - adding additional drives
+ - hot replacing underlying drives
+
+lsblk
+	verify partition exists
+sudo pvcreate /dev/sdb1
+	prepare partition for LVM
+sudo pvs
+	physical volume summary
+	verify the volume format is now LVM
+sudo pvdisplay
+	show more info about physical volumes
+sudo vgcreate vgdata /dev/sdb1
+	create a volume group named vgdata and include our physical volume
+sudo vgs
+	verify with volume group summary
+sudo vgdisplay
+	show more volume group information
+
+ - To reference volume groups use the name only without the path
+ - Volume groups are an abstraction, so they don't have a physical location
+
+sudo lvcreate --name lvdata --size 495M vgdata
+	create a logical volume inside of the volume group
+	This will create a new logical volume that's 495 MB in size, named lvdata in the vgdata volume group.
+	We have to make the logical volume slightly smaller than the volume group to be sure that it will fit.
+sudo lvs
+	verify
+sudo lvdisplay
+	more info
+
+ - There are two different paths you can use to refer to logical volumes
+
+LVM Volume Path Names
+ - /dev/VolumeGroupName/LogicalVolumeName
+ - /dev/mapper/VolumeGroupName-LogicalVolumeName
+
+Formatting tools
+ - mkfs
+	simpler
+ - mke2fs
+	more powerful
+
+sudo mkfs -t ext4 /dev/vgdata/lvdata
+	format our logical volume as ext4
+sudo blkid
+	verify
+
+ - To make the logical volume accessible, you'll need to mount it
+
+sudo mkdir /media/lvdata
+	create a mount point
+sudo mount /dev/vgdata/lvdata /media/lvdata
+	mount the logical volume
+df -Th
+	show file system including type and human readible format
+
+ - Drives and logical volumes mounted manually won't survive a reboot without adding them to the /etc/fstab
+	the file system table
+
+sudo vi /etc/fstab
+	edit
+i
+	insert mode
+
+add the end of the file add:
+/dev/vgdata/lvdata /media/lvdata ext4 defaults 1 2
+
+/dev/vgdata/lvdata	/media/lvdata	ext4		defaults		1	2
+logical volume path	mount point	file system	filesystem options
+
+defaults include rw, suid, dev, exec, auto, nouser, async
+1 = the fifth volumn is to include this drive in a backup using the dump command
+2 = the last column is the order to do a file system check on bootup
+	root should always be 1, and other drives 2 or higher if to be checked, and 0 if not
+
+esc, :x!
+	save and exit
+
+sudo umount /media/lvdata
+	unmount volume
+sudo mount -a
+	reads fstab and attempts to mount all drives that are not mounted
