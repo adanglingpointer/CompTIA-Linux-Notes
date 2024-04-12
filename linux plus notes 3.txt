@@ -108,7 +108,7 @@ OS	Users	Data
 
  - RAID can be accomplished on Linux using LVM or the mdadmin tool
 
- - Drives, partitions, logical volunes, and RAID devices can be combined in many different ways to solve your
+ - Drives, partitions, logical volumes, and RAID devices can be combined in many different ways to solve your
 	storage needs.
 
 [Drive 1]	[Drive 2]	[Drive 3]	[Drive 1]	[Drive 2]	[Drive 3]
@@ -209,3 +209,78 @@ To practice in VirtualBox
  - Click Choose to attach to VM
  - Create 3 more drives the same way, incrementing the name for each one
  - Power VM back up again
+
+==========
+
+Create partitions using fdisk
+-----------------------------
+
+cat /proc/partitions
+	get a list of drives and partitions that the kernel recognizes, comes from the kernel directly
+lsblk
+	list block devices
+	gives a visual list of the drives and their partitions or logical volumes
+sudo blkid
+	list partition labels and UUID numbers
+	it also shows which file system the drive is formatted with
+sudo fdisk -l
+	read the partition table from the drive directly
+sudo fdisk -l /dev/sda
+	list partitions on only one drive
+
+ - fdisk is getting the data directly from the drive's partition table
+ - /proc/partitions lists the partitions that the kernel recognizes, and is stored in RAM
+ - In some cases, if you modify a drive's partition, the kernel may not update it's partition table because the
+	drive is locked by a process, or because one of its partitions is mounted.
+	If possible, unmount the partition and then use partprobe to update the partition table.
+
+sudo partprobe
+	update the partition table
+	then check /proc/partition again
+	if this still doesn't match fdisk, you may have to reboot
+
+ - Legacy systems use a BIOS to boot the machine (rather than UEFI and GUID partition table)
+ - BIOS stores its partition table in the MBR - master boot record
+ - Although fdisk supports GUID partitions now, older versions did not, so to edit partitions you had to use gdisk
+ - Everything we do here in fdisk can be done in gdisk as the interface is virtually the same
+
+sudo fdisk /dev/sdb
+	edit the partitions on /dev/sdb
+	if no partition table is found, a new DOS partition table is created (old BIOS style partition table)
+m
+	help menu
+d
+	delete a partition
+n
+	create a new partition
+p
+	print partition table
+t
+	change a partition type
+w
+	write partition table to disk and exit
+q
+	quit without saving changes
+g
+	create a new GPT partition table
+	this is desirable unless you're on a legacy system with BIOS
+
+g
+n
+1
+2048
++500M
+	create a 500MB partition and leave the rest of the disk free
+p
+	print partition table to verify
+w
+	write and exit
+
+sudo udevadm settle
+	register the partition to let the kernel know it has changed
+cat /prov/partitions
+	verify the kernel recognizes the new partition
+
+ - Once you've created partitions, you can use them in LVM or format them directly using tools such as mkfs
+ - Once you have formatted it, you can mount it
+
