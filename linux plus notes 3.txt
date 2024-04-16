@@ -435,3 +435,81 @@ sudo umount /media/lvdata
 	unmount volume
 sudo mount -a
 	reads fstab and attempts to mount all drives that are not mounted
+
+==========
+
+Expand existing logical volumes
+-------------------------------
+
+cat /proc/partitions
+	list partitions
+	if a partition didn't exit, it would need to be created using fdisk or parted
+
+sudo pvcreate /dev/sdc1
+	make sdc1 a physical volume
+sudo pvs
+	verify
+
+ - Normally we would create a new volume group at this point, but for this exercise we're going to extend an
+	existing volume group
+
+sudo vgs
+	list all volume groups
+sudo vgextend vgdata /dev/sdc1
+	extend the vgdata volume group by adding the new physical volume to it
+
+ - The next step is to resize the logical volume
+
+sudo lvs
+	verify logical volume size
+sudo lvresize -l 100%VG /dev/vgdata/lvdata
+	resizing logical volume
+	when we're specifying the logical volume, we provide the full path to it
+df -h
+	verify the final system size of lvdata
+
+ - Since/if lvdata is still mounted, the file system size is the old size
+ - Because we formatted our logical volume as ext4, we'll resize it using resize2fs
+ - lvresize command can now resize the filesystem as well, older versions could not
+
+sudo resize2fs /dev/vgdata/lvdata
+
+df -h
+	verify again, logical volume and it's file system are expanded to the new size
+
+==========
+
+Reduce existing logical volumes
+-------------------------------
+
+ - lvresize can be used to unmount and remount volumes, as well as resize file systems.
+ - We're going through the manual process first, as older versions may not support these features.
+ - Although it's a good idea to always unmount a file system when resizing it, we can leave it mounted when
+	increasing the size.
+ - However, when we decrease the size, we have no choice but to unmount the volume first.
+ - Some filesystems like XFS can not be resized down, only up.
+
+sudo umount /dev/vgdata/lvdata
+	unmount volume
+sudo e2fsck -ff /dev/vgdata/lvdata
+	run a file system check
+	if the filesystem passes all 5 checks, then proceed
+sudo resize2fs /dev/vgdata/lvdata 500M
+	resize filesystem
+sudo lvresize -L 500M /dev/vgdata/lvdata
+	reduce the logical volume size to 500 MB
+sudo lvs
+	verify
+sudo mount /dev/vgdata/lvdata /media/lvdata
+	mount filesystem
+df -h
+	check size
+
+sudo lvresize -r -L 400M /dev/vgdata/lvdata
+	will prompt to unmount
+	will reduce the logical volume using lvresize, newer method
+sudo lvresize -r -L 600M /dev/vgdata/lvdata
+	this will increase or decrease size based on what's specified vs the size it already is
+
+ - Using the newer syntax, lvresize is doing all of the legwork for us by unmounting it, resizinf the filesystem,
+	reizing the logical volume, and mounting it back up.
