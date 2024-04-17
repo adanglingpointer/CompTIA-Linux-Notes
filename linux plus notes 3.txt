@@ -513,3 +513,101 @@ sudo lvresize -r -L 600M /dev/vgdata/lvdata
 
  - Using the newer syntax, lvresize is doing all of the legwork for us by unmounting it, resizinf the filesystem,
 	reizing the logical volume, and mounting it back up.
+
+==========
+
+Create EXT filesystems
+----------------------
+
+ - Before you can use a partition or logical volume in Linux, you need to put a file system on it.
+ - This process is called formatting the drive.
+ - The standard tool to format filesystems is mkfs
+
+ls /sbin/mk*
+	show all mkfs programs
+
+Reformat lvdata logical volume:
+
+sudo umount /dev/vgdata/lvdata
+	unmount if it's still mounted
+df
+	verify the volume is not mounted
+sudo mkfs /dev/vgdata/lvdata
+	format with default filesystem (by not specifying one)
+	answer y when prompted
+sudo lsblk -f
+	verify with lsblk which will show us the filsystem used
+
+ - The only difference between ext2 and ext3 is the journal.
+ - ext4 is recommended.
+ - tune2fs can convert our filesystem from ext2 to ext3
+	tune2fs also allows you to modify attributes of ext filesystems including
+		- name
+		- ID
+		- how many times a filesystem can be mounted before checked
+		- filesystem optimization settings
+
+sudo tune2fs -j /dev/vgdata/lvdata
+	-j creates the journal
+sudo lsblk -f
+	now we can see it's formatted as ext3
+	you can go back and forth between these two without losing data
+
+ - In recent versions of Linux, the ext4 driver is used to format all ext file systems.
+ - Older systems had separate drivers for ext2 and 3.
+ - You can migrate ext2 and ext3 to ext4 without losing data, in a one-way process.
+
+sudo tune2fs -O extent,uninit_bg,dir_index /dev/vgdata/lvdata
+
+extent = specifies using extent trees to store the location of data blocks
+	this is an ext4 feature
+uninit_bg = speeds up subsequent file system checks after the first one is completed
+dir_index = uses hashed b-trees to speed up lookups for large directories
+
+sudo e2fsck -fD /dev/vgdata/lvdata
+	check the file system (5 passes)
+sudo mount /dev/vgdata/lvdata /media/lvdata
+	it's ready to be mounted
+df -Th
+	verify it's mounted, and file system type
+
+==========
+
+Repair EXT filesystems
+----------------------
+
+Corrupting the filesystem! 😈
+
+[ Do not attempt on a production machine; test only ]
+
+ - In order to fix the file system we'll need to break it first.
+ - Make sure /dev/vgdata/lvdata is mounted as /media/lvdata.
+	If not, then mount it:
+		sudo mount /dev/vgdata/lvdata /media/lvdata/
+
+sudo cp -Rvf / /media/lvdata
+	Recursively copy a bunch of files to the volume.
+	Let it run for a while and then kill the process with ctrl+c.
+		You need a lot of files in the file system so you have a higher chance of corrupting one of them.
+sudo dd if=/dev/zero bs=1 count=10 of=/dev/vgdata/lvdata seek=1000
+	Using dd to copy zeros to random places on the file system.
+	bs=1 -> block size is 1
+	count=10 -> that'll be 10 blocks
+	We're writing to the logical volume device, not to the file system.
+	Run this multiple times and change the seek value each time.
+
+sudo umount /media/lvdata
+	unmount
+sudo fsck -n /dev/vgdata/lvdata
+	Run a file system check.
+	Using -n will notify of corruption but not fix it.
+
+Option		Function
+fsck -A		Checks all file systems
+fsck -AR	Checks all file systems except for the root
+fsck -f		Force checks all file systems, even if they are considered clean
+fsck -a		Fixes safe problems automatically.
+		These are issues that don't need review from an administrator.
+fsck -y		Answers all questions with a yes.
+		This is not the same thing as -a
+		There are some decisions that an administrator needs to make.
