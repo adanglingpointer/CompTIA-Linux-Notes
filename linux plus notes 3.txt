@@ -611,3 +611,111 @@ fsck -a		Fixes safe problems automatically.
 fsck -y		Answers all questions with a yes.
 		This is not the same thing as -a
 		There are some decisions that an administrator needs to make.
+fsck -n		Doesn't fix anything, displays results
+
+sudo fsck /dev/vgdata/lvdata
+	it will prompt you through each fix
+
+ - Since it's a bad idea to check filesystems that are mounted, it's difficult to check filesystems that are
+	always mounted such as root.
+ - However, you can force a file system to check on the next reboot.
+ - In a legacy Linux system created before systemd, you can create a file in / named forcefsck and then reboot.
+
+sudo tune2fs -l /dev/vgdata/lvdata
+	Check for 'Maximum mount count'.  -1 means that the max. times it can be mounted before forcing a file
+	 system check has been turned off.
+	'Mount count' shows how many times it has been mounted.
+	'Last checked' shows the last time the file system was checked.
+sudo tune2fs -c 1 /dev/vgdata/lvdata
+	Enable the check.
+	Then reboot.
+sudo tune2fs -c -1 /dev/vgdata/lvdata
+	Disable check again.
+
+==========
+
+Create and repair XFS filesystems
+---------------------------------
+
+ - Unmount volume if it's mounted.
+
+sudo mkfs -t xfs -f /dev/vgdata/lvdata
+	Reformat logical volume as XFS.
+	-f for force.
+lsblk -f
+	Verify.
+sudo xfs_repair /dev/vgdata/lvdata
+	Repair XFS filesystem.
+
+XFS Tools
+Command		Function
+xfs_admin	Changes file system parameters.
+		i.e. how it works, and the filesystem label.
+xfsdump		File system backup tool.
+		Incremental filesystem dump ability.
+xfs_freeze	Suspends access to a file system.
+xfs_quota	Handles XFS file system quotas.
+xfs_growfs	Resizes XFS file systems larger.
+
+XFS does not allow shrinking, only grow.
+
+==========
+
+MDRAID or DMRAID?
+-----------------
+
+MDRAID
+ - Replaced RAID tools
+ - Administer with mdadm
+ - Software RAID works at the device level.
+ - /dev/mdx device names
+ - To create a RAID, we grab multiple devices such as /dev/sdb and /dev/sdc and combine them into a RAID.
+ - The Linux MD stack would then give us a new device name such as /dev/md0, which we'd format and mount.
+
+MDRAID RAID Levels
+ - RAID 0
+ - RAID 1
+ - RAID 4
+ - RAID 5
+ - RAID 6
+ - RAID 10
+ - Linear
+ - Multipath
+
+ - LVM has been slowly adding RAID capabilities to a stack.  This is referred to as DMRAID, or device mapper RAID.
+
+DMRAID
+ - Uses device mapper
+ - Administer with LVM
+ - /dev/volumegroup/logicalvolume device names
+
+DMRAID RAID Levels
+ - Linear volumes
+ - RAID 0
+ - RAID 1
+ - RAID 4
+ - RAID 5
+ - RAID 6
+ - RAID 10
+ - Mirrors
+	Up to four mirrors of one volume.
+
+ - The future may belong to LVM as developers add features.
+ - In some cases, LVM actually uses the MDRAID stack underneath when it makes sense.
+ - mdadm is still the recommended way of creating software RAIDs in Enterprise Linux 7, while LVM is the recommended
+	way of creating non-RAID volumes.
+
+==========
+
+Create a RAID 5 using LVM
+-------------------------
+
+RAID Levels
+Level	Function
+0	Striping; no redundancy; requires two drives minimum (it's fast)
+	The more drives, the faster the throughput--up to a point.
+1	Mirroring; drives mirrored in pairs
+	The contents of the first drive is the same as the second.
+	(slower than single drives because data is written twice)
+10	Disk mirroring and striping; requires four drives
+	Essentially two mirrors combined in a stripe to regain some of the speed lost from the mirror.
