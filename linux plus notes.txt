@@ -680,7 +680,7 @@ parentheses - run commands in a subshell, they will have different variable scop
 
 a=0; (a=10; echo "in=$a"); echo "out=$a"
 	in=10
-	out=10
+	out=0
 
 ==========
 
