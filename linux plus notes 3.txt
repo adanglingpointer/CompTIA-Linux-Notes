@@ -719,3 +719,115 @@ Level	Function
 	(slower than single drives because data is written twice)
 10	Disk mirroring and striping; requires four drives
 	Essentially two mirrors combined in a stripe to regain some of the speed lost from the mirror.
+4	Striping with parity; requires three drives minimum
+	A stripe is created across all but one drive, which stores a parity bit so if a drive fails it can be
+	 recreated.
+5	Striping with striped parity; requires three drives minimum
+	Similar to RAID level 4 but the parity data is striped across the array increasing speed
+6	Striping with two levels of redundancy; requires four drives minimum
+	2 drives can fail and still be able to recover
+
+ - We are going to create a RAID 5
+ - Make sure that /dev/vgdata/lvdata is not mounted
+
+sudo vgremove vgdata
+	remove the group
+	it will ask if you want to remove the volume group vgdata,
+	 and remove active logival volume vgdata/lvdata
+	 You can pick y for both.
+
+sudo lvs
+	verify
+sudo vgs
+	verify
+
+ - You'll also want to look at the /etc/fstab to remove any rentries referencing this logical volume and either
+	delete them or comment them out.
+ - If you do not do this and reboot, you will end up in emergency mode and you'll have to fix it there.
+
+sudo vi /etc/fstab
+	i for insert mode
+	add # at beginning of line to comment out
+	exit with esc :x! enter
+
+ - Now let's create a RAID array with 3 drives
+ - First, use fdisk to create a new partition
+
+sudo fdisk /dev/sdd
+	open fdisk interactive mode
+g
+	change drive to GPT label
+n
+	create a new partition
+	take the default of 1 and hit enter
+	take the default first sector of 2048 and hit enter
+	for the ending sector, we're going to specify a size of +500M to match the partitions of the other drives
+p
+	print partition table to verify
+w
+	write partition table and exit
+
+ - Let's create a volume group and include all three partitions.
+ - We have not made sdd1 a physical volume. However, an interesting shortcut is letting vgcreate do it automatically
+
+sudo vgcreate vgraid /dev/sddb1 /dev/sdc1 /dev/sdd1
+	If it prompts you to wipe the file system say yes
+pvs
+	verify
+
+ - At this point, there's nothing special about our volume group as it's no different than the non-RAID volume
+	group we made previously.
+ - Now that we have the volume group and it includes three partitions, let's create the logical volume.
+ - Here's where we specify the RAID.
+
+sudo lvcreate --type raid5 -i 2 -l 100%VG -n lvraid vgraid
+	We have three drives, but the width of a RAID5 stripe is the total number of drives minus one,
+	 so in our case, 3 - 1 is 2.
+	We specify 100%VG for the size so it will take up as much space as you have in the volume group.
+sudo lvs
+	-n = name, lvraid; lastly the name of the volume group (vgraid)
+	verify
+	here we can see that it's 100% synchronized
+
+ - Notice that the capacity of our RAID is not equal to the capacity of the volume group.
+ - The capacity formula for RAID5 is capacity = nDrives -1 x (capacity of smallest drive)
+ - In our case it's the smallest drive x 2, or about 984 MB
+ - Now let's format our RAID with the ext4 file system.
+
+sudo mkfs -t ext4 /dev/vgraid/lvraid
+
+sudo mkdir /media/lvraid
+	make a mount point for it
+sudo mount /dev/vgraid/lvraid /media/lvraid
+	mount it
+df -h
+	verify
+
+Tearing down an LVM RAID in order (the same as any other volume):
+ - umount
+ - lvremove
+ - vgremove
+ - pvremove
+
+ - You can use the fio command to do disc speed tests on different configurations.
+ - Look into RAID-specific file system optimizations.
+
+==========
+
+Create RAIDs using mdadm
+------------------------
+
+ - Clear out old volumes: start by deleting the volume group and logical volume that you created previously
+ - Make sure the logical volume is not mounted first and then remove it
+
+sudo umount /media/lvraid
+
+sudo vgremove vgraid
+
+sudo pvremove /dev/sdb1
+sudo pvremove /dev/sdc1
+sudo pvremove /dev/sdd1
+
+ - When using mdadm you can create RAID from partitions, or you can create RAID from the drives themselves
+ - An advantage to having partitions for your RAID is that you can set the partition type to RAID which allows
+	your system to recognize the drives ar boot for assembling the RAID
