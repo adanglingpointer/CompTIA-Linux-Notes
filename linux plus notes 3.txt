@@ -831,3 +831,182 @@ sudo pvremove /dev/sdd1
  - When using mdadm you can create RAID from partitions, or you can create RAID from the drives themselves
  - An advantage to having partitions for your RAID is that you can set the partition type to RAID which allows
 	your system to recognize the drives ar boot for assembling the RAID
+ - Let's use fdisk to go into each partition and change the type to Linux RAID
+
+sudo fdisk /dev/sdb
+	press t for type
+	press L to view the partition types
+	press q, then type 29 and hit enter
+	press p to print partition table
+	press w to write and exit
+
+ - Do this for each of the drives that have partitions
+
+sudo fdisk /dev/sdc
+	t
+	29
+	w
+sudo fdisk /dev/sdd
+	t
+	29
+	w
+
+ - Now let's add a partition to /dev/sde so we can create a four drive RAID 5
+
+sudo fdisk /dev/sde
+	g = change to GPT label
+	n = create new partition
+	1 = take default partiton number
+	2048 = take default first sector of 2048
+	+500M = specify 500M to match the partitions on the other drives
+	t = change type
+	29 = Linux RAID
+	p = print
+	w = write and exit
+
+lsblk
+	verify
+
+sdb
+--sdb1
+sdc
+--sdc1
+sdd
+--sdd1
+sde
+--sde1
+
+mdadm Operating Modes
+
+Mode			Function
+Assemble		Assembles preexisting array
+Incremental assembly	Adds single device to array
+Create			Creates a new array and writes metadata to disks
+			Activates the array and it can be used immediately, even if it's in the process of
+			 resyncing drives.
+Build			Builds an array from drives without RAID metadata
+			It's a specific use-case and should only be done if you know what you're doing
+Monitor			Monitors RAID devices and acts on state change (i.e. failed drive)
+Grow			Grows, shrinks, or changes an array
+			Even used if you want to change RAID levels
+Manage			Adding new spare drives or replacing failed drives
+Misc			Miscellaneous items such as removing metadata from drives
+
+ - Let's use the Create mode to create a brand new RAID 5 array using four drives
+
+sudo mdadm --create /dev/md/mdraid /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 --level=5 --raid-devices=4
+ --bitmap=internal
+	/dev/md/mdraid = device name
+
+lsblk
+	verify what we've created
+
+sdb
+--sdb1
+  --md127
+sdc
+--sdc1
+  --md127
+sdd
+--sdd1
+  --md127
+sde
+--sde1
+  --md127
+
+ - mdadm starts at md127 and counts backwards for the device number
+
+ls -l /dev/md/mdraid
+	lxrwxrwxrwx. 1 root root 8 Dec 29 13:19 /dev/md/mdraid -> ../md127
+	we can see that it's a link that points to /dev/md127
+
+ - We can format either the RAID number (md127) or the path to the name.
+ - The name is more reliable as the number may change if you have more than one array
+
+cat /proc/mdstat
+	get status
+		md127 : active raid5 sde1[4] sdd1[2] sdc1[1] sdb1[0]
+		1526784 blocks super 1.2 level 5, 512k chunk, algorithm 2 [4/4] [UUUU]
+
+sudo mdadm --detail /dev/md/mdraid
+	get more deatils with mdadm
+	this shows the device name and the drives that are in it
+
+		Number	Major	Minor	RaidDevice	State
+		0	8	17	0		active sync	/dev/sdb1
+		1	8	33	1		active sync	/dev/sdc1
+		2	8	49	2		active sync	/dev/sdd1
+		4	8	65	3		active sync	/dev/sde1
+
+
+sudo systemctl enable mdmonitor
+sudo systemctl start mdmonitor
+	enable and start the status to have mdmonitor keep an eye on your RAID
+
+ - Now let's format the drive with the XFS file system
+
+sudo mkfs -t xfs /dev/md/mdraid
+
+sudo mkdir /media/mdraid
+	create a mount point
+sudo mount /dev/md/mdraid /media/mdraid
+	mount
+df
+	verify
+lsblk
+	verify
+
+Other useful mdadm options:
+
+sudo mdadm --query /dev/md/mdraid
+	summary of array information
+sudo mdadm --detail /dev/md/mdraid
+	detailed info
+sudo mdadm --fail /dev/sdb1
+	mark drive as failed, sets a device as faulty
+	this is the first step in replacing a drive
+sudo mdadm --remove /dev/sdb1
+	remove drive
+sudo mdadm --add /dev/sdb1
+	add new drive
+sudo mdadm --stop /dev/md/mdraid
+	stop a drive array
+	then remove
+	this is the same option as you'd use to remove a device but if you specify an array, it removes the entire
+	 array
+
+ - If you decide to remove the array, you'll want to also delete any RAID metadata on the drives to keep the RAID
+	system from trying to reassemble the array.  Use --zero-superblock
+
+sudo mdadm --zero-superblock /dev/sdb1
+	remove RAID superblock from drive
+
+ - mdadm RAIDs can be a bit sticky and hard to get rid of.  Let's break it down
+
+sudo umount /media/mdraid
+sudo mdadm --stop /dev/md/mdraid
+sudo mdadm --zero-superblock /dev/sdb1
+sudo mdadm --zero-superblock /dev/sdc1
+sudo mdadm --zero-superblock /dev/sdd1
+sudo mdadm --zero-superblock /dev/sde1
+sudo systemctl stop mdmonitor
+sudo systemctl disable mdmonitor
+
+ - You will also want to change the partition type of each partition back to non-RAID Linux partitions
+
+sudo fdisk /dev/sdb
+	t
+	linux
+	w
+sudo fdisk /dev/sdc
+	t
+	linux
+	w
+sudo fdisk /dev/sdd
+	t
+	linux
+	w
+sudo fdisk /dev/sde
+	t
+	linux
+	w
