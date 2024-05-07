@@ -1010,3 +1010,168 @@ sudo fdisk /dev/sde
 	t
 	linux
 	w
+
+==========
+
+Mount filesystems on boot
+-------------------------
+
+ - If you unplug a  drive, the order of drives might break a system if they are in the fstab with static pass.
+ - It's better to mount drives based on a label or UUID.
+
+ - First we will create two more partitions on the /dev/sde drive.
+ - First one is 250 MB:
+sudo fdisk /dev/sde
+	n
+	enter
+	enter
+	+250M
+ - Next one will take up the rest of the drive:
+	n
+	enter
+	enter
+	enter
+
+ - There should now be three partitions:
+	p
+
+ - Write changes:
+	w
+
+ - Register the new partitions
+sudo udevadm settle
+
+ - Verify that the kernel sees the partitions:
+cat /proc/partitions
+
+ - Format both partitions as ext4:
+sudo mkfs -t ext4 /dev/sde2
+sudo mkfs -t ext4 /dev/sde3
+
+ - Verify that they are both formatted:
+sudo blkid
+
+ - Create mount points
+sudo mkdir /media/sde2
+sudo mkdir /media/sde3
+
+ - Create an entry in fstab
+sudo vi /etc/fstab
+	- append to the end:
+	UUID=bb67878-dis237d-sdgy8-sd8ygf	/media/sde2	ext4		defaults	0	0
+	device name				mount point	filesys type	options		backup	filesyscheck
+
+ - For the file system check column, root should always be 1, and other drives 2 or higher if to be checked, or 0 if not.
+
+ - For the second partition, we'll mount it by label.
+ - File system labels are specific to the file system.
+	ext4 formatted partitions will use e2label command
+	xfs would use fxs_admin command
+
+sudo e2label /dev/sde3 backups
+	backups is the label
+sudo e2label /dev/sd3
+	verify
+sudo tune2fs -l /dev/sde3
+	get more information
+
+sudo vi /etc/fstab
+	Append at the end:
+	LABEL=backups	/media/sde3	ext4	defaults	0	0
+
+sudo mount -a
+df -h
+	Verify that the lines in /etc/fstab will work (make sure they aren't mounted first)
+
+ - If you delete a partition or logical volume, make sure that you remove it from the fstab immediately where it may impact your ability to boot your Linux system.
+
+==========
+
+Encrypt drives with LUKS
+------------------------
+
+Linux Unified Key Setup = LUKS
+
+cat /etc/fstab
+	If there is any line in this file referencing /dev/sde1 then delete it.
+	If you don't and the system reboots before you're done making changes, it can interrupt the boot process
+	 and you'll need to fix the problem in emergency mode.
+
+sudo cryptsetup -y -v luksFormat /dev/sde1
+	YES
+		agree to overwrite data on /dev/sde1
+		enter new password
+sudo cryptsetup -v luksOpen /dev/sde1 decryptvolume
+	Make the decrypted device available for use.
+	The last argument is the name that we'll use for the device, you can change this to whatever.
+	This will prompt for password.
+ls -l /dev/mapper
+	Look at device maps.
+sudo mkfs -t ext4 /dev/mapper/decryptvolume
+	Give it a file system.
+	Now you can mount it, copy files to it, etc. just liek if it were a normal formatted partition.
+sudo cryptsetup -v luksClose /dev/mapper/decryptvolume
+	Deactivate the dexrypted volume.
+	Now it's no longer accessible and all of the data in the drive is safely secure.
+
+==========
+
+Troubleshoot storage systems
+----------------------------
+
+ - Troubleshooting storage issues starts with making sure you are not out of space.
+
+df -hT
+	Shows the overall storage space usage of a mounted volume.
+	h = human readable sizes.
+	T = file system type.
+du
+	Tell you the size of a directory.
+	Requires an argument.
+	For example: du -h ~
+
+ - If you're experiencing slow disk performance, it may be due to the drive not being able to handle the number of I/O operations that have been requested.  You can use the iostat command to analyze this.  If it's not installed, install the sysstat package to get it.
+
+sudo dnf install -y sysstat
+
+sudo iostat -d
+	Show drive statistics.
+	adding -x shows even more info.
+sudo iostat -xdt 2 5
+	Display statics 5 times with 2 seconds between them.
+
+ - To find applications using a lot of disc I/O, use the iotop program.
+
+sudo dnf install -y iotop
+
+sudo iotop
+	Run iotop application.
+	Similar to top, but for I/O.
+
+ - Once you've identified the applications using excessive I/Os, you can then make a decision what to do.
+ - One option if youy have high disk I/O is to change to a different scheduler.
+ - Linux allows you to swap out the I/O schedulers to tune your system.
+
+Linux I/O Schedulers:
+ - CFQ scheduler: places I/Os in queues for each application and then rotates between the queues.
+	It places priority on read I/Os.
+	It's a nice balanced scheduler.
+ - Deadline scheduler: batch processes I/O requests by time.
+	Is generally preferred for database operations when latency is important.
+ - NOOP scheduler: places all I/O requests in one FIFO (first in, first out) and processes them in order.
+	Good if lower CPU utilization is important.
+
+cat sys/block/<drive name>/queue/scheduler
+	View current I/O scheduler.
+echo noop > /sys/block/<drive name>/queue/scheduler
+	Set I/O scheduler.
+	You'll need to change to the root user to do this; Using the su command as redirects don't work well
+	 with sudo.
+
+ - To measure disk performance, you can use the fio command that's in the fio package (it will need to be installed).
+
+fio --name=random-write --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 --size=4g --iodepth=1 runtime=60 --time_based --end_fsync=1
+	Test disk with flexible I/O.
+
+ - When a file is deleted on an SSD, a trim operation has to be done to recover that space for a feature use.
+ - Most modern Linux file systems automatically run a trim operation every so often, but if you have to do it manually, use the fstrim command.
