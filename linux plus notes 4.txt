@@ -1,0 +1,78 @@
+Chapter 9. Backup, Restore, and Compress Files
+
+Archive files with tar and cpio
+-------------------------------
+
+ - In Linux we use an archiver to preserve metadata (permissions, ownership, access control lists) as well as the file data itself.
+
+Linux Archivers
+ - cpio - copy in/copy out
+ - tar - tape archiver
+
+cpio
+----
+
+su -
+	Because sudo doesn't work well with pipes, we'll first change to the root user.
+find /etc | cpio -ov > etc.cpio
+	The find command sends a list of files in /etc including absolute path to cpio, which creates an archive and includes them.
+cpio -itvI etc.cpio
+	List the files in the etc.cpio archive.
+	-i = extract
+	-t = list table of contents
+	-v = verbose
+	-I = specify the cpio archive instead of reading from standard in
+cpio -iv --no-absolute-filenames -I etc.cpio
+	Extract the archive in current directory.
+	This will extract the files where you are, without regard for the absolute file path in the archive.
+	Leave the --no-absolute-filenames out to extract and overwrite the files in their original locations.
+
+tar
+---
+
+tar Options
+
+Option		Function
+-c		Create
+-x		Extract
+-t		List
+-v		Verbose
+-p		Preserve permissions
+--xattrs	Preserves extended attributes, such as access control list and SELinux security context
+-f		File name to use for archive
+-C		Changes to different directory before extracting, instead of extracting in current directory
+
+ - tar does not compress archives itself, but has the ability to call external compression tools.
+
+Linux Compression Tools
+ - gzip
+ - bzip
+ - xz
+
+sudo tar --xattrs -cvpf etc.tar /etc
+
+sudo tar --gzip --xattrs -cvpf etc.tar.gz /etc
+
+sudo tar --bzip2 --xattrs -cvpf etc.tar.bz2 /etc
+	Smaller archive.
+
+sudo tar --xz --xattrs -cvpf etc.tar.xz /etc
+	Smallest archive, takes longer to compress.
+
+tar -tf etc.tar
+	List files in tar archive.
+tar -tf etc.tar | grep firewall
+	Find firewall within archive.
+
+sudo tar --xattrs -xvpf etc.tar
+	Extract in current directory.
+
+sudo tar --xattrs -xvpf etc.tar -C /home/user1/Download
+	Extract in /home/user1/Download
+
+dd
+--
+
+dd syntax:
+dd [options] if=<input device> of=<output device>
+	The input and output devices can be a range of blocks, a partition, or an entire drive.

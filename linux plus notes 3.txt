@@ -1175,3 +1175,20 @@ fio --name=random-write --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 -
 
  - When a file is deleted on an SSD, a trim operation has to be done to recover that space for a feature use.
  - Most modern Linux file systems automatically run a trim operation every so often, but if you have to do it manually, use the fstrim command.
+ - If a drive is failing, you may have file system errors.  The tools that you run are specific to the file system you're using.
+	- For ext based file systems use fsck
+	- For xfs file systems use xfs_check and then xfs_repair to fix it.
+	- For btrfs use btfsr check
+
+--
+quiz notes:
+
+Resizing logical volumes larger can be done live without unmounting the volume. When reducing their size they need to be unmounted.
+
+mdadm Assemble can't create a new RAID array. We need the Create subcommand for that.
+
+If the active partition table and the drive's partition table don't match the partprobe command forces the kernel to re-read the partition table on the drive.
+
+The `resize2fs` command is used to resize EXT based filesystems although newer versions of `lvresize` have a `--resizefs` option.
+
+EXT4 supports solid state disks whereas EXT3 does not.
