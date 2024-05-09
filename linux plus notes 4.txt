@@ -76,3 +76,117 @@ dd
 dd syntax:
 dd [options] if=<input device> of=<output device>
 	The input and output devices can be a range of blocks, a partition, or an entire drive.
+
+dd Options:
+
+Option		Function
+bs=		Block size; larger block sizes lower the I/Os necessary to copy a drive
+count=		Number of blocks
+status=		Command status setting
+
+sudo dd if=/dev/sda of=~/mbr.bin bs=512 count=1 status=progress
+	Create a backup of the master boot record.
+
+==========
+
+Compress files
+--------------
+
+ - You might want to use a compressor without Tar if you just want to make a file smaller and you were not concerned about metadata like file ownership, permissions, or timestamps.
+
+gzip
+----
+
+cp /etc/services .
+	copying services to current directory
+gzip services
+	This will replace existing file with the archive.
+	This is different from archivers like Tar that leave the original files intact and create a new archive.
+gunzip services.gz
+	Decompress file.
+	This will remove the archive file completely.
+
+bzip2
+-----
+
+bzip2 services
+bunzip2 services.bz2
+
+xz
+--
+
+xz services
+unxz services.xz
+
+ - If you want to archive a directory full of files and directories, use Tar and one of the compressors, as Tar will preserve metadata as well.
+ - On Windows, the ZIP archiver is popular, which does a fairly good job of recursively archiving and compressing directories of files.  We can also use ZIP on Linux as well.
+
+zip
+---
+
+zip services.zip services
+	This will leave the original file in place and create a new archive.
+unzip services.zip
+
+==========
+
+Copy files between systems
+--------------------------
+
+SCP syntax:
+scp [options] <local files> remoteuser@remotehost:remotepath
+
+ - scp uses the authentication and tunnel link functionality of SSH
+
+SSH Options
+
+Option	Function
+-P	Remote network port (if not 22)
+-p	Preserves permissions
+-r	Copies files recursively
+-C	Compresses files
+-c	Specifies the cipher; Some ciphers require fewer CPU cycles and can speed up a copy
+-i	SSH key file
+
+Copy files with SCP
+
+scp /etc/hosts user1@dbhost1:/home/user1/
+	Copy local hosts file to remote user1 directory
+
+ - SCP respects file permissions and ownership, so in order to copy the local /etc/hosts file to the remote /home/user1 location, the local user needs to be able to read /etc/hosts and the remote user (user1) needs to be able to write to the /home/user1 directory.
+
+Copy files with SSH (by piping data into it)
+
+cat /etc/hosts | ssh user1@dbhost1 "cat - > /home/user1/hosts"
+	cat reads the local hosts file and sends it to the standard in of SSH,
+	 which then logs into dbhost1 as user1 and executes the commands between the quotes on the remote machine.
+	The cat command on the remote host reads from standard in and redirects the output to /home/user1/hosts
+	Essentially, this is doing the same as scp but with more typing.
+
+Duplicate disk with dd and SSH
+
+dd if=/dev/sda | ssh user1@dbhost1 "dd of=/dev/sdb"
+
+ - A simpler, less secure, and faster way of copying a file between two systems is using network cat, or ncat.
+
+On the destination machine run:
+ncat -l 8080 > ~/file
+		This will start ncat listening on port 8080, and whatever comes into that port will be redirected 
+		to ~/file
+
+On the sending machine:
+ncat <IP> 8080 --send-only < /etc/hosts
+
+ - ncat provides no security or protection from eavesdroppers, so only use it on a local network.
+
+ - rsync works a lot like the cp command, however instead of blindly copying files, it can compare files and skip them if they exist, or do low level checksums to see if the files are complete or need to be resent.
+
+Rsync syntax
+
+rsync [options] <source> <destination>
+
+rsync *.txt /media/backups	==	cp *.txt /media/backups
+
+rsync -r /etc /media/backups	==	cp -r /etc /media/backups
+	rsync recursive syntax
+	This will copy the /etc/ directory and all of its files to /media/backups
