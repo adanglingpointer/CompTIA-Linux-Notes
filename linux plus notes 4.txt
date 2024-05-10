@@ -182,6 +182,7 @@ ncat <IP> 8080 --send-only < /etc/hosts
  - rsync works a lot like the cp command, however instead of blindly copying files, it can compare files and skip them if they exist, or do low level checksums to see if the files are complete or need to be resent.
 
 Rsync syntax
+------------
 
 rsync [options] <source> <destination>
 
@@ -190,3 +191,131 @@ rsync *.txt /media/backups	==	cp *.txt /media/backups
 rsync -r /etc /media/backups	==	cp -r /etc /media/backups
 	rsync recursive syntax
 	This will copy the /etc/ directory and all of its files to /media/backups
+
+rsync -r /etc/ /media/backups	==	cp -r /etc/* /media/backups
+	The trailing slash makes a different - this will copy the directory's contents recursively without the directory.
+
+Remote rsync Syntax
+-------------------
+
+rsync -av --progress -e ssh <local files> <user@remotehost:path>
+	-a = archive mode, which includes recursive, permissions, ownership, devices, and timestamps
+	-v = verbose
+	--progress = show progress output
+	-e = specify ssh
+
+ - accessing a system with access control list and SELinux or extended attributes, we can also include --acls, --xattrs, or both.
+	rsync -av --progress --acls -e ssh <local files> <user@remotehost:path>
+	rsync -av --progress --xattrs -e ssh <local files> <user@remotehost:path>
+
+==========
+
+Chapter 10. Manage Software
+
+Software management systems overview
+------------------------------------
+
+ - Linux software repositories contain software packages, as well as an index of what they provide.
+ - These indexes and the packages themselves can be cryptographically signed.
+ - If the signature is incorrect, meaning it has been compromised, then the Linux package manager will reject it.
+
+Debian					Red Hat					SUSE
+Package: .deb				Package: .rpm				package: .rpm
+Installer: APT				Installer: DNF				Installer: Zypper
+(Advancaed Package Management Tool)
+
+Software Package Contents
+-------------------------
+ - Binary programs
+ - Documentation
+ - Configuration files
+ - Destination file locations
+ - Installation scripts
+
+ - Dependencies will be installed first, then the package.
+
+Compiling from Source
+---------------------
+ - If binary package is unavailable
+ - RPM or DEB packages source
+ - Tarball packages source
+ - Requires development tools to compile
+ - Not recommended
+
+Sandboxed Applications
+----------------------
+ - Use containers
+ - Include all dependencies
+ - Different applications can have different library versions
+ - Distribution agnostic
+ - Packages require more space
+
+ - snapd
+ - Flatpak
+ - AppImage
+
+snapd
+-----
+ - Created by Ubuntu
+ - Central Snap Store
+ - Can have multiple versions of an application simultaneously
+ - Can completely replace local packages
+ - Support for Ubuntu, Debian, RHEL
+
+Flatpak
+-------
+ - Not developed by a distribution
+ - Decentralized software
+ - Addable software remotes
+	Equivalent to repos
+	FlatHub is the most popular remote and has the most applications
+ - Replaces user software, not all software
+ - Installed by default on most Linux distros
+
+AppImage
+--------
+ - Simple - one file per app
+ - Download, change permissions, execute
+ - Run as regular user
+ - Central repository
+ - No real installation process
+
+==========
+
+DNF overview
+------------
+
+RPM Abilities
+-------------
+ - Reads list of dependencies
+ - Can download from web or FTP servers
+ - Does not maintain a list of available software
+	RPM does not manage software collections in remote repositories
+
+Dandified YUM Overview
+----------------------
+ - YUM (Yellow Dog Updated Modifier) created for Yellow Dog Linux
+ - YUM rewritten and named DNF
+	In CentOS 6 or 7, you would use the YUM command
+	In CentOS 8, DNF is the default package manager, but you can still type YUM as the command redirects to DNF
+ - Resolves dependencies
+ - Has package groups
+	A group is a list of software packages that are generally installed together
+ - DNF repositories contain RPM software packages
+ - Most Red Hat like distributions, such as Fedora and CentOS, use YUM or DNF for installing packages in the RPM package format.
+ - Client maintains local list of repositories
+
+DNF Groups
+----------
+ - DNF groups contain many software packages
+ - All software in a group can be installed at once
+ - All software in a group can be removed at once
+ - Groups can contain optional software
+ - Groups make configuring a system quicker
+
+==========
+
+Get DNF packages by name
+------------------------
+
+dnf --showduplicates list xfsprogs
