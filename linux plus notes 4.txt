@@ -319,3 +319,87 @@ Get DNF packages by name
 ------------------------
 
 dnf --showduplicates list xfsprogs
+
+DNS Package Selection Options:
+ - name
+ - name.arch
+	short for CPU architecture
+	such as .i686 or .x86_64
+ - name-ver
+ - name-ver-rel
+ - name-ver-rel.arch
+ - name-epoch:ver-rel.arch
+
+ - We can use package selection options for most DNF operations including install, remove, list.
+
+dnf list --showduplicates xfsprogs-5.0.0-[1-6]*
+	Search by glob.
+
+ - If a packager wanted to mark a lower version number as an upgrade, they can tag it with an EPOCH number.
+
+==========
+
+Get info on packages with DNF
+-----------------------------
+
+dnf list --all
+	List all packages that are in the local RPMDB package database and packages that are listed in a repository.
+	--all is not necessary, it's assumed
+	First column is the package name with CPU architecture.
+	Second column is the version number and release.
+	The third column is the repository it came from.
+	If the repository is Anaconda, then the package was installed when the OS was.
+dnf list --all --showduplicates
+	If the package name is green and underlined, it is the current installed version.
+	Package names in blue signify that there is an update available.
+dnf list --installed
+	Get a concise list of installed packages.
+dnf list --updates
+	List installed packages with available updates.
+	These packages would be installed with a dnf upgrade
+dnf list --available
+	List packages available in the repositories, but are not installed.
+dnf list --obseletes
+	Packages that were replaced by other packages.
+dnf info dnf
+	More info on a package, in this example dnf itself.
+	Lists the name, version, release, architecture, size, source, repository, license, description,
+	 for both the installed version and update.
+	This information also mimics the information we get from viewing RPM packages using rpm -qi
+dnf deplist dnf
+	Show the depency list for a package.
+
+==========
+
+Get info on package groups with DNF
+-----------------------------------
+
+ - A package group is a pre-configured collection of packages that can be installed or removed all at one time.
+
+dnf group list
+	List all dnf groups
+	Older versions of CentOS used grouplist which does the same as modern syntax group list.
+
+ - Available Environment Groups
+	Collections of software for OS configurations
+	ie. Server with GUI, Server, Minimal Install
+ - Installed Environment Groups
+	ie. Workstation
+ - Installed Groups
+ - Available Groups
+	Recommended groups
+	Includes container management, .NET development, RPM development, and more
+
+dnf group list hidden
+	Show groups including those hidden, which were others available during installation
+
+dnf group info "Development Tools"
+	Get more info on Development Tools groups.
+	Not case sensitive.
+	The quotes are requires because it's two words
+	Three categories on output: Mandatory Packages, Default Packages, Optional Packages
+
+--with-optional
+	Used on installation to install these Optional Packages.
+
+==========
