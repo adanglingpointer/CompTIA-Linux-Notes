@@ -403,3 +403,140 @@ dnf group info "Development Tools"
 	Used on installation to install these Optional Packages.
 
 ==========
+
+Search for packages with DNF
+----------------------------
+
+dnf search vim
+	Case insensitive search
+dnf search --all vim
+	Search everything including metadata
+dnf search --all vi*
+	We can also use wildcards
+dnf provides vim
+	Show which packages provide vim, and which version
+
+==========
+
+Install and remove packages with DNF
+------------------------------------
+
+sudo dnf install -y tree
+
+sudo dnf install -y epel-release
+	Add a third party repository called Extra Packages for Enterprise Linux
+
+sudo dnf reinstall vim
+	Reinstall the package, instead of uninstall and install again
+
+sudo dnf install vim --skip-broken
+	Install all packages and dependencies that are not broken, in the case of out of sync repos
+
+dnf list updates
+	Show packages with available updates
+
+sudo dnf upgrade teamd
+	Upgrade/update the package
+
+sudo dnf remove teamd
+	Uninstall
+
+sudo dnf autoremove
+	Gets rid of any unused dependencies on the entire system.
+	We can also specify a package
+
+==========
+
+Install and remove package groups with DNF
+------------------------------------------
+
+ - Every DNF group has a group ID in addition to its name
+
+dnf group list ids
+	Show all groups and inside parentheses their group ID
+
+sudo dnf group install "Security Tools"
+	Specify by group name
+
+sudo dnf group install security-tools
+	Specify by group ID
+
+sudo dnf install @"Security Tools"
+sudo dnf install @security-tools
+	Manage groups with DNF by specifying groups with @
+
+sudo dnf group upgrade security-tools
+
+sudo dnf group remove security-tools
+
+==========
+
+Get package information with RPM
+--------------------------------
+
+ - Once a package is installed, the RPM package database is updated with the package information
+
+RPM Query
+ - Query the database for a package
+ - Query the package
+ - Query the database for a file
+
+rpm -qa
+	Query the database
+	-q = query
+	-a = all packages
+
+rpm -qa | sort
+	Sort alphabetically
+
+rpm -qi bash
+	Query a package (bash in this case)
+
+rpm -qa --last
+	Sort package by installation date
+
+rpm -ql bash
+	See where all files on a package were installed
+
+rpm -qd bash
+	Only show documentation files
+
+rpm -qc bash
+	Only show configuration files
+
+rpm -qf /bin/bash
+	Shows which package a file came from
+
+rpm -qdf /bin/bash
+	Show where the documentation is installed for the /bin/bash command
+
+rpm -q --provides bash
+	Query for what this package provides
+
+rpm -q --requires bash
+	See what the package requires
+
+rpm -q --changelog bash
+	Check changes to package
+
+dnf download --downloaddir ~/packages httpd
+	Will not install the package, but instead download to ~/packages
+
+rpm -qip httpd-2.4.53-7.el9.x86_64.rpm
+	Query info on a .rpm package (before installing)
+
+rpm -qlp httpd-2.4.53-7.el9.x86_64.rpm
+	Get a list of files inside the package and where they'll be installed
+
+rpm --querytags
+	Get a list of tags used in RPM packages
+
+rpm -qa --queryformat "%-50{NAME} %-10{VERSION}\n" | sort
+	This will show all packages in the system sorted alphabetically and formatted in two columns, including the
+	 package version.
+
+rpm -q --queryformat "[%{FILEMODES:perms} %{FILENAMES}\n]" httpd
+	Shows all files installed with httpd and their permissions
+
+man rpm
+	/QUERY OPTIONS
