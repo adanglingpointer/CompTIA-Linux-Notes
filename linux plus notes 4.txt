@@ -540,3 +540,175 @@ rpm -q --queryformat "[%{FILEMODES:perms} %{FILENAMES}\n]" httpd
 
 man rpm
 	/QUERY OPTIONS
+
+==========
+
+Manage DNF repositories
+-----------------------
+
+ - DNF repository configuration information is stored in /etc/yum.repos.d
+	This is a directory, not a file
+ - All repository files in this directory have to end in .repo
+
+[baseos]
+	Each repository name is in square brackets
+name=Rocky Linux $releasever - BaseOS
+	Descriptive name of the repository
+mirrorlist=https://mirrors.rockylinux.org/mirrorlist?arch=$basearch&repo=BaseOS-$releasever$rltype
+	The list of repository mirrors
+	DNF will try to find the fastest mirror to use
+#baseurl=http://dl.rockylinux.org/$contentdir/$releasever/BaseOS/$basesearch/os/
+	This line is commented out
+	If there was not a mirror list, then the repository would have a static line with the URL to the repo
+gpgcheck=1
+	0 turn off gpg signature checking, 1 turns it on
+enabled=1
+	If the repo is enabled
+countme=1
+	Help repository maintainers differentiate between short-lived installations and real servers in order 
+	 to better gauge traffic
+metadata_expire=6h
+	metadata expiration time
+	DNF caches metadata about repository packages and needs to be refreshed every so often
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9
+	The gpg key file used to ensure packages from this repository haven't been tampered with
+
+dnf repolist
+	List enabled repos with 2 columns: repo id and repo name
+dnf repolist -v
+	Verbose mode to show more info
+	Provides the same info as the repo info command
+dnf repolist --disabled
+	Show disabled repos
+
+ - To enable a repo you could either edit the .repo file, or a faster way it to use the config-manager sub command
+
+sudo dnf config-manager --set-enabled baseos-source
+	Enable the repo
+sudo dnf config-manager --set-disabled baseos-source
+	Disable the repo
+
+dnf --enablerepo=epel install <package>
+	Enable a repository while installing a package
+	Without enabling it permanently
+dnf --disablerep=epel install <package>
+	Disable a repo while installing packages
+	You might want to do this if you wanted to install a package out of the baseos repository instead of the 
+	 updated version in the epel repository
+
+ - Some additional repositories can be added as simply as installing a package
+
+sudo dnf install epel-release
+	Install epel repository
+
+rpm -ql epel-release
+	List the contents of this package using rpm
+
+dnf config-manager --add-repo <repository_URL>
+	Add a repository by URL
+
+dnf repository-packages epel list --all
+	List all packages from a repository
+
+ - Be careful when adding external repositories
+ - If you add a repository with malware in it, your system may become infected
+ - Try to stick with the main repositories if you can
+
+==========
+
+Manage OS updates
+-----------------
+
+dnf check-update
+	Shows all software packages that need updating
+	Indented packages have been obseleted
+dnf list --obsoletes
+	Only show obseleted packages
+sudo dnf upgrade grub2-tools
+	Upgrade a specific package and it's dependencies
+sudo dnf upgrade
+	Upgrade the entire operating system
+sudo dnf upgrade -x kernel*
+	Upgrade everything except for the kernel
+
+ - If you want to permanently hold back some packages from being upgraded, you can install the dnf version lock plugin.
+
+sudo dnf install python3-dnf-plugin-versionlock
+
+dnf-list --showduplicates kernel
+	Show available kernel updates
+
+sudo dnf versionlock add kernel-4.18.0-193-el8
+	To lock the current kernel, you could just use the name kernel
+
+dnf versionlock list
+	Show list of version lock packages
+
+sudo dnf versionlock delete kernel-4.18.0-193-el8.*
+	Delete a version lock
+
+sudo dnf versionlock clear
+	Clear all version locks
+
+sudo dnf upgrade --security
+	Only install security updates
+
+ - Configuration files may be renamed when a new package is installed
+
+Preserving Configuration Files:
+ - Unmodified configuration file:
+	- Config file is overwritten
+ - Modified configuration file:
+	- Modified config file is saved with .rpmsave or .rpmorig extension
+	- New config file is saved from the package
+ - Modified configuration file and noreplace label in package:
+	- New config file is saved with .rpmnew extension, and the original config is left in place
+
+dnf changelog kernel
+	View change log
+
+dnf changelog --upgrades
+	Show change log of available upgrades
+
+==========
+
+Update the kernel
+-----------------
+
+ - Installing kernels can be as easy as running a system update and rebooting
+
+dnf list kernel
+	List our currently installed kernel
+	Items that are bold belong to our current kernel and include the kernel itself along with modules and tools
+
+Kernel Naming Conventions:
+
+kernel.x86_64	4.18.0-193.el8
+	4 = major version
+	18 = major revision
+	0 = kernel patch
+	193 = red hat release
+	el8 = built for enterprise Linux 8
+	x86_64 = 64 bit CPUs
+
+ - Installed kernels reside in /boot
+ - The kernels are named vmlinuz
+ - We also have ram disc images for booting and configuration files
+
+uname -r
+	This shows the exact kernel release that's currently running
+
+ - Grub bootloader files are stored in /boot/grub2
+ - The configuration file for BIOS based systems is /boot/grub2/grub.cfg
+ - Do not edit these files as they get overwritten on kernel updates
+ - If you want to modify the way Linux boots, edit /etc/default/grub
+ - After you've made changes to this file and saved them, you'll need to run grub2-mkconfig
+
+sudo grub2-mkconfig
+	This takes the grub2 configuration files and updates the boot loader code
+	This is ran automatically whenever we install a new kernel
+
+ - If you have a UEFI system, the boot loader config is stored in /boot/efi/EFI/centos/grub.cfg
+	Or replace centos with redhat. This may change depending on the OS.
+
+dnf list --available kernel
