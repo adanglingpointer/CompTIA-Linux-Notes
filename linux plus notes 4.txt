@@ -712,3 +712,76 @@ sudo grub2-mkconfig
 	Or replace centos with redhat. This may change depending on the OS.
 
 dnf list --available kernel
+	Check for kernel updates
+sudo dnf upgrade kernel
+	Update kernel
+
+ - There's a workaround with DNF that will allow you to preserve a certain number of packages of the same name
+ - This is a configuration item in tje /etc/dnf/dnf.conf file called --latest-limit
+
+sudo dnf remove $(dnf repoquery --installonly --latest-limit=-2 -q)
+	Uninstall all but the last 2 kernels
+	This uses dnf repoquery to get a list of kernels further back than 2, and then passes that list to dnf to
+	 remove.
+
+ - To set the default boot kernel to another kernel use the grub2-set-default command.
+ - The indexing starts with 0 so the newest kernel would be 0 and one kernel older would be 1, and so on.
+
+sudo grub2-set-default 1
+	Set default kernel to one.
+
+ - Once you've set the default kernel, you'll need to update the grub config.
+
+sudo grub2-mkconfig
+	Update the grub config
+	Now, if you reboot your system it would come up in the second kernel
+
+
+==========
+
+Manage kernel modules
+---------------------
+
+ - Linux has modules that have to match the kernel version
+ - These modules add functionality to the kernel which could include file systems and device drivers
+ - These modules are stores in /lib/modules for 32-bit kernels, and /lib/64 for 64-bit kernels.
+
+ls /lib/modules/$(uname -r)/kernel
+	The dollar sign and parentheses around uname -r will execute that command, and the result will be inserted
+	 into its place.
+	This is an easy way of inserting the current kernel version into the path without having to look it up.
+
+lsmod
+	See currently loaded modules
+
+modinfo dm_mirror
+	Show detailed info on a module
+
+sudo modprobe -vr dm_mirror
+	Remove a module and it's dependencies (dn_mirror in this case)
+
+sudo modprobe -v dm_mirror
+	Load a module and it's dependencies
+
+ - Some modules take parameters as well
+
+ - If hardware is local, we can make Linux scan for it using the depmod command
+
+sudo depmod -v
+	Tell us which modules are needed by HW or by other modules
+
+ - In order to have modules load automatically at boot, we need to create a file in /etc/modules-load.d and include the module name.
+
+sudo vi /etc/modules-load.d/dm_mirror.conf
+	Create module, must end in .conf
+	add a line:
+		dm_mirror
+	Save and exit
+	Now it will be loaded in boot
+
+ - If you need to make sure a module is not loaded at boot, make a file in /etc/modprobe.d
+ - This is called blacklisting the module.
+
+sudo vi /etc/modprobe.d/ctxfi.conf
+	Blacklist the snd-ctxfi driver for an old sound blaster audio card
+	Name of the file doesn't matter
