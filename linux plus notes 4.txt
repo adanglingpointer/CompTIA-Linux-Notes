@@ -785,3 +785,122 @@ sudo vi /etc/modules-load.d/dm_mirror.conf
 sudo vi /etc/modprobe.d/ctxfi.conf
 	Blacklist the snd-ctxfi driver for an old sound blaster audio card
 	Name of the file doesn't matter
+	add line:
+	blacklist snd-ctxfi
+
+ - It's rare that we manage modules manually this way, but it's still a skill worth having.
+
+==========
+
+Get package information with dpgk and APT
+-----------------------------------------
+
+Debian Package Tools
+ - dpkg
+	The low level command for managing packages (debian package)
+	Equivalent to rpm to Red Hat
+ - APT
+	The repository based package management system
+	Equivalent to YUM or DNF on Red Hat
+
+ - apt-get and apt-cache are powerful and still work to query and install packages.
+ - However, the newer tool is simply called apt and provides a more user-friendly experience.
+
+Query with apt
+ - apt search <package name>
+	Shows all packages and shows if they are installed or not
+ - apt show < package name>
+	Shows package details
+ - apt list <package name> [criteria]
+	List packages based on criteria, such as installed or upgradable
+
+sudo apt search whois
+	This searches the package names, as well as the description and files included in the package
+
+sudo apt info whois
+	Show install size, version, description, dependencies, bug contact
+
+sudo apt list --installed whois
+	Will only print out of it's installed
+
+sudo apt list whois
+	Show available packages
+
+sudo apt install whois
+	Will only prompt y/n if there were dependencies to install too
+
+ - Just as there are package groups in YUM, Debian uses virtual packages, which are empty packages with a list of install requirements.
+ - If we install a virtual package, it will install all of its dependencies too
+
+sudo apt info apache
+	Will return a message that apache is a package (virtual) and so we can't get information on it
+
+apt-get download whois
+	Download but not install package (.deb)
+
+sudo dpkg --info whois_5.4.2_amd64.deb
+	Works on local packages only
+
+sudo dpkg -c whois
+	Show which files will be installed
+
+sudo dpkg -i whois_5.4.2_amd64.deb
+	Install the package
+
+sudo dpkg -L whois
+	Ask the package database to list the files
+	We are not using the software package name, but rather the name of the application
+
+sudo dpkg -S /usr/bin/whois
+	Ask the package database which package a file in the file system belongs to
+	We can do this with any file in the file system that was installed by dpkg or apt
+
+==========
+
+Manage software with dpgk and APT
+---------------------------------
+
+sudo apt install apache2
+
+sudo apt info apache2
+	See that it's installed, what it provides (httpd, httpd-cgi), and a list of dependencies
+	Suggested packages
+
+sudo apt list --upgradable
+	Show updatable software packages
+	If this is empty, you may want to update the indexes of available software
+
+sudo apt update
+	Update the indexes of available software
+
+sudo apt install --only-upgrade snapd
+	Upgrade a package (snapd in this case)
+
+sudo apt remove apache2
+	Uninstall the package, but doesn't automatically remove the dependencies
+
+sudo apt autoremove
+	Remove packages no longer needed
+
+ - You can also use dpkg to remove packages.
+ - However, dpkg does not manage dependencies.
+ - This works fine for simpler jobs, but for uninstalling complex depednecy trees it may fail, and you will need to use apt.
+
+sudo dpkg -r rsync
+	"dependency problem - not removing"
+
+ - When you uninstall a package it leaves behind the configuration files.
+ - If you want to remove the package and its configuration files, use apt purge
+
+sudo apt purge apache2
+
+sudo apt full-upgrade
+	Upgrade the entire distribution to a newer version (as opposed to just updating packages within the
+	 distribution version)
+	This is the same as apt-get dist-upgrade
+
+==========
+
+Work with APT repositories
+--------------------------
+
