@@ -904,3 +904,97 @@ sudo apt full-upgrade
 Work with APT repositories
 --------------------------
 
+Ubuntu Repository Section Names
+ - Main
+	Software supported by Ubuntu
+ - Universe
+	Open source community software
+ - Restricted
+	Closed source drivers
+ - Multiverse
+	Proprietary or non-open source software
+
+ - Names may vary on different Debian based distributions.
+ - For each of these sections, there are channels as well.
+
+Ubuntu Repository Channel Names
+ - release
+	The standard channel, which contains software as it was released without updates
+ - release-updates
+	Updates to packages
+ - release-security
+	Security updates to existing versions
+ - release-backports
+	Packages that have been back ported to the current OS
+ - devel
+	Development software that will most likely have bugs
+
+ - Ubuntu and other Debian based distributions will have OS version specific repositories and mirrors for them.
+
+Ubuntu Releases
+ - 18.10 Cosmic Cuttlefish
+ - 19.04 Disco Dingo
+ - 20.04 Focal Fossa
+ - 22.04 Jammy Jellyfish
+
+ - First section is the year (22 = 2022), and the last section is the month (04 = April).
+ - Debian has a fairly complex versioning system.  For instance, you may have a package for Ubuntu 22.04 that belongs to release-update; Since it's an update file that has a restrictive license it also belongs to the multiverse channel; Lastly, it may be compiled for 32-bit CPUs.
+ - In additional, we may choose a different mirror that will be faster for us.
+ - All of this information for each repository channel is stored in one line of a configuration file.
+
+Example repository source line:
+deb [arch=i386] https://example.io/SuperEditor/updates/release-update multiverse
+
+Repository Configuration Locations:
+ - /etc/apt/sources.list
+ - /etc/apt/sources.list.d/*
+	Directory
+
+apt policy
+	Look at repositories
+
+ - You can also look at these files directly using grep
+
+grep '^deb' /etc/apt/sources.list /etc/apt/sources.list.d/*
+	This shows only lines that starts with word deb in both the sources.list file and the sources.list.d
+	 directory.
+
+ - You can add repositories from the command line by editing the sources.list file manually and pasting in the apt line.
+ - Or you can download a repo file into the sources.list.d directory.
+ - Deleting the repositories can also be done by just commenting out the line or deleting it using a text editor.
+ - apt also includes a couple of commands to help with this process.
+ - You'll need the curl command to download the GPG key.
+
+sudo apt install curl
+
+curl -sL https://packagecloud.io/AtomEditor/atom/gpgkey | sudo apt-key add -
+	- for standard in
+
+ - This method of adding GPG keys still works but it is being replaced by simply storing the keys in /etc/app/trusted.gpg.d
+
+curl -sL https://packagecloud.io/AtomEditor/atom/gpgkey | sudo tee /etc/apt/trusted.gpg.d/AtomEditor.asc
+
+ - Now add the repostiroy.
+
+sudo add-apt-repository -S deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main
+	This will force an apt update of the repository data
+
+sudo add-apt-repository -r deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main
+	Remove the repository
+
+ - Another way to add a third party repository is through PPA (personal package archive).
+ - A PPA is usually a very focused repository run by the authors of the software, although it doesn't have to be.
+
+sudo add-apt-repository ppa:libreoffice/ppa
+
+ - If you installed software from this repository and then deleted the repository, there won't be any updates to that software.
+ - You can remove the repository the same way you added it by adding --remove
+ - There's a note in the output that says if you want to remove all packages from the repository to install ppa-purge.
+
+sudo apt install ppa-purge
+
+sudo ppa-purge ppa:libreoffice/ppa
+	If we had installed packages from the repository, it will remove them as well
+
+==========
+
