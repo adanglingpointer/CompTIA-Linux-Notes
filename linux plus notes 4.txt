@@ -998,3 +998,136 @@ sudo ppa-purge ppa:libreoffice/ppa
 
 ==========
 
+Install software from source
+----------------------------
+
+ - First, make sure that you have the necessary development tools installed.
+
+sudo dnf group install -y "Development tools"
+
+ - We are going to install git from source code.  You will also want to install lubcurl-devel so Git can connect to external HTTPS repositories.
+
+sudo dnf install libcurl-devel
+
+tar -xzvpf git-2.39.0.tar.gz
+	Extract archive
+
+cd git-2.39.0/
+
+ls
+
+make configure
+	Creates a config file based on our system
+	That script will be different depending on your OS, hardware config, etc.
+
+./configure --prefix=/usr/local
+	Run the configure script that make created
+	The --prefix defines the location for the binary file
+
+sudo make install
+	Compiles source code that may take a few moments, then installs it
+
+/usr/local/bin/git --version
+
+==========
+
+About sandboxed applications
+----------------------------
+
+ - Sandboxes software utilizes operating system containers to include all dependencies in one downloadable distribution-agnostic file.
+
+Linux Package Managers
+
+		Debian		.deb		dpkg		APT
+Linux Source	Red Hat		.rpm		rpm		dnf
+		Slackware	.tar.gz		installpkg	slackpkg
+
+Sandboxes Applications
+
+System		Focus
+snapd		Designed to replace package managers
+Flatpak		Designed for user applications
+AppImage	One file per application
+
+snapd
+ - A project created by the developers of Ubuntu
+ - Installed or at least installable on Ubuntu >= 18.04, and RHEL >= 7.6.
+
+sudo dnf install snapd
+
+sudo systemctl enable --now snapd.socket
+	Enable the snapd communication socket
+
+ - snapd comes with a central package repository, and it's already configured, so we can jump straight into finding applications.
+
+snap find ascii-clock
+	Find the available versions of the package ascii-clock.
+
+snap info ascii-clock
+
+snap install ascii-clock
+
+df -h
+	snap applications are mounted on a loopback device
+	The container's file system is made available via this system
+	/dev/loop0	117M	117M	0	100%	/var/lib/snapd/snap/core/14399
+	/dev/loop1	9.5M	9.5M	0	100%	/var/lib/snapd/snap/ascii-clock/36
+
+snap list
+	List installed snap programs
+
+snap find
+	Only shows about ~32 recommended applications, not all
+
+cat /var/cache/snapd/names
+	Look at snapd cache for complete list
+
+snap refresh asci--clock
+	Update snap packages
+
+snap revert ascii-clock
+	Revert to previous version
+
+snap remove ascii-clock
+
+Flatpak
+ - Flatpak apps run in a sandbox by default.
+ - Flatpak is a decentralized system, meaning you can obtain packages from several repos, or what Flatpak calls remotes.
+ - By default there is not a remote installed.
+ - Flathub is the most popular remote and has the most applications.
+
+sudo dnf install flatpak
+
+flatpak remotes
+	List installed remotes
+
+sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+flatpak search gimp
+
+flatpak install org.gimp.GIMP
+
+flatpak info org.gimp.GIMP
+
+https://flathub.org/apps/category/All
+	View all available apps
+
+flatpak update org.gimp.GIMP
+
+flatpak list
+	List installed apps
+
+flatpak run org.gimp.GIMP
+	Run a flatpak application
+
+ - If you choose to launch a Flatpak application from the command line, it may be worth your time to create aliases for each.
+ - For instance, you could crease an alias in the ~/bashrc file called GIMP that runs the GIMP Flatpak.
+	alias gimp='flatpak run org.gimp.GIMP'
+
+flatpak uninstall org.gimp.GIMP
+
+AppImage
+ - https://appimagehub.com
+ - Download .AppImage
+ - Make file executable
+ - To delete, just delete the file.
