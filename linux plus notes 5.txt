@@ -1,0 +1,74 @@
+Chapter 11. File Security
+=========================
+
+What is a file?
+---------------
+
+ - In Linux, everything is a file
+
+Regular file
+ - Binary or text, saved on a storage device, and can be read and written to.
+ - Metadata
+	- Ownership
+	- Access control
+	- File size
+	- Creation date
+	- Metadata is data that describes other data, the contents of the file
+
+Directory file
+ - Lists files
+ - Associates data with files names
+ - The directory associates data blocks with file names
+
+Device drivers - drivers that connect applications to physical hardware
+ - In Linux, everything is a file including printers.
+ - The printer device is a file.
+ - You can save data to it using the same tools that we use to save data to a regular file.
+ - When that data is saved to a printer file, it's sent to the printer.
+ - A printer is a kind of Character Device File
+
+Block Device File
+ - A physical device that appears as a file
+ - A storage device such as a solid state disk
+
+Character Device File
+ - Unique because they can be virtual, in that they might not represent a real physical device.
+ - We have a character device file called Zero that when read gives us an endless supply of zeros.
+	/dev/zero = 0000000000000...
+	/dev/null = text that we don't want to keep
+		swallows everything that is written to it
+		this is useful when you don't want the output of a command to show on the screen
+ - Our screen is a character device file as well.
+
+Network Socket File
+ - Network sockets are also files.
+ - Writing data to a network socket can send it across the network.
+ - They may also be used to send data between programs on a local computer.
+
+Virtual Files
+ - Files that don't really exist anywhere and have no size, but you can still read and write to them
+	/proc/cpuinfo
+		Shows info about the CPU, has data in it, but has a size of zero bytes because the OS creates
+		 the data instantly when it's being read
+
+ - Even the output of an application is considered a file that has not been saved yet
+
+Pipe File
+ - A physical tube, or pipe, from one application to another.
+
+What is the advantage of all of this, considering other operating systems don't operate this way?
+ - The idea of everything being a file allows us to view important system information and write data to physical devices with simple tools.
+ - It allows us to read block devices and the output of commands using simple text viewers.
+ - It allows us to have one command communication with another without any special software, which allows us to combine multiple simple commands to solve complex problem.
+ - The concept of everything being a file sets Linux apart from other operating systems and proves to be very powerful.
+
+==========
+
+Get information about files
+---------------------------
+
+Metadata
+ - Data that describes other data is called metadata
+ - File name
+ - File size
+ - Permissions
