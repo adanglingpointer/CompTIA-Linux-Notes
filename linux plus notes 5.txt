@@ -72,3 +72,97 @@ Metadata
  - File name
  - File size
  - Permissions
+ - Ownership
+ - Access time
+ - And more
+
+ - The quickest way to get information about a file is by doing a long list of the file
+
+ls -l /etc/passwd
+
+Long List of a File
+
+-rw-r--r--. 1 root root 2750 Feb 9 23:07 /etc/passwd
+
+-		rw-				r--				r--.
+File type	User owner's permissions	Group owner's permissions	Permissions for other	
+
+1				root 		root 		2750
+Number of inodes the file uses	User owner	Group owner	Size of the file in bytes
+
+Feb 9 23:07			/etc/passwd
+Last modified date and time	Name of the file
+
+ - First column is the file type
+	- means regular data file
+
+Linux File Types
+Character	Type
+-		Regular File
+b		Block Device
+c		Character Device
+d		Directory
+l		Symbolic Link
+n		Network File
+p		FIFO (pipe)
+s		Socket
+
+ - The next three characters are the user owner's permissions
+	rw-
+
+r = read
+w = write
+x = execute
+
+ - Inodes, or index nodes, stores the metadata about the file, as well as a pointer to the location of the data blocks on the disk.
+ - The inode of a file does not contain the name.  The file's name is not stores in the file's inode.  We need a directory inode for that.
+ - Directory data is stored in directory inodes.
+
+ - In Linux, a file name is only hidden if the first character of its name is a dot.
+
+ls -la
+	List hidden files (l = long list, a = all)
+
+file /etc/passwd
+	List the tile type
+	ie. ASCII text
+	The file command looks at the bits of the file to determine which type it is.
+
+stat /etc/passwd
+	Another command to show file info
+
+Stat of a file
+File: /etc/passwd
+Size: 2750	Blocks: 8	IO Blocks: 4096		regular file
+Device: fd00h/64768d	Inode: 2101122	Links: 1
+	Size in bytes
+	Number of file system blocks
+	Size of the IO block = size in bytes of every block
+	Type of file
+	Device number
+	Inode number
+	Number of hard links
+	Permissions
+	ID number of the user owner
+	ID number of the group owner
+	SELinux security context
+
+ - Each drive uses the same number for inodes, so two files on two drives can have the same inode number.
+ - However, the device number in combination with the inode number makes a unique address.
+ - Stat also shows (last) access, modify, and change dates.
+	modify = content modified
+	change = last time and attribute or content was modified
+		ie. metadata would update if we changed ownership or permissions, but the file data is not changed
+ - Birth = creation file.  This last item came from UNIX, and is not supported on Linux.
+
+==========
+
+Extended Attributes
+ - Require support by the OS
+ - Extensions to file
+ - Stored with files on disk
+ - Three major types of extended attributes
+	- Extended system attributes
+	- Extended security attributes
+	- Extended user attributes
+
