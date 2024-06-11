@@ -166,3 +166,101 @@ Extended Attributes
 	- Extended security attributes
 	- Extended user attributes
 
+Extended System Attributed
+ - Store file access control lists (ACLs)
+	- Permissions for multiple users
+	- Permissions for multiple groups
+	- Inheritance
+	- Backup and restore permissions
+
+Extended Security Attributes
+ - SELinux mandatory access control system
+	- Layered over discretionary access control
+	- System-wide rules restricting all users
+ - SELinux modes
+	- Multilevel security
+		mimics a government security levels, ie. level 3 security clearance
+	- Role-based access control
+	- Type enforcement
+		What Enterprise Linux mostly uses to enforce security policy
+		All files, processes, and users are tagged with a type
+
+Extended User Attributes
+ - Store additional flags
+	- Called extended attributes
+	- Append only
+	- Compress
+	- Immutable
+		The file can not be modified, deleted or renamed, and no data can be written to the file
+		This is true even for the root user
+		However, the root user can remove the immutable flag
+	- Backup
+		When the backup flag is set and the file is deleted, the data is backed up so we can un-delete
+		 it later.
+
+ - Not all file systems or operating systems support all extended attributes.
+
+==========
+
+Get extended attributes
+-----------------------
+
+touch aclfile.txt
+
+ls -l aclfile.txt
+	Take a look at the permissions on this file using a long list
+
+setfacl -m user:root:rwx aclfile.txt
+	Set an ACL on the file
+	-m = modify
+
+getfacl -t aclfile.txt
+	Shows standard Linux permissions and ownership, as well as the additional ACL for the root user
+
+ - The ls command cannot display the access control list, however, there is now a plus symbol where there used to be a dot.
+	From:	-rw-rwxr--.
+	To:	-rw-rwxr--+
+ - This clue tells you that there's an ACL set and that you need to use the getfacl command to see it.
+
+ls -Z aclfile.txt
+	Show SELinux security context
+	unconfined_u:object r:user_home_t:s0 aclfile.txt
+		User is unconfined
+		The role is object
+		The type for tpye enforcement is user_home_t
+		The security level is 0
+			We didn't add this context, it was auotmatic based on rules in the SELinux policy database
+
+Extended user attributes:
+
+sudo chattr +i aclfile.txt
+	Add an extended attribute to file (immutable)
+lsattr aclfile.txt
+	Viewing extended attribute
+	----i---------- aclfile.txt
+lsattr -l aclfile.txt
+	Verbose
+	aclfile.txt Immutable
+
+Getting Extended Attributes
+Task				Command
+Verify existence of ACL		ls -l
+Show ACL information		getfacl
+Show SELinux security context	-Z option
+Show extended attributes	lsattr
+
+==========
+
+Linux permissions overview
+--------------------------
+
+ - The standard Linux permission system came from Unix and was created 40 years ago.
+
+Features of Standard Permissions
+ - Users belong to multiple groups
+	- Groups can NOT contain other groups
+ - Files belong to one user
+ - Files belong to one group
+ - Permissions can be set for user, group, or other
+ - Files: users can read, write, and execute
+ - Directories: users list, create files, and traverse
