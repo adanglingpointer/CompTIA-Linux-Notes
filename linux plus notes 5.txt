@@ -264,3 +264,134 @@ Features of Standard Permissions
  - Permissions can be set for user, group, or other
  - Files: users can read, write, and execute
  - Directories: users list, create files, and traverse
+ - Support privilege escalation
+ - Support group owner inheritance
+	- Files and directories can inherit the parent directory's group owner
+ - Support default file permissions
+
+Shortfalls of Ownership
+ - Files can only belong to one user
+ - Files can only belong to one group
+ - Directories can only belong to one user
+ - Directories can only belong to one group
+ - Inheritance only for group owner
+	- A child file or directory can inherit the parent directory's group owner but not its permissions
+ - Permissions set for "other" are not concise
+ - Backing up permissions difficult
+ - No temporary permissions
+ - Access Control Lists remedy most of these issues
+
+==========
+
+File and directory modes
+------------------------
+
+Permission Modes
+ - Read
+	Read permissions for files - read contents of a file
+	Read permissions for directories - read the metadata of files in the directory
+ - Write
+	Write permissions for files - Write or modify content of a file
+	Write permissions for directories - Create new files in a directory
+ - Execute
+	Execute permissions for files - Load files into memory and run on the CPU
+	Execute permissions for directories - Enter or traverse the directory
+
+==========
+
+File ownership
+--------------
+
+ - The command that we use to change the ownership of a file is chown.
+ - In order to change the ownership of a file, you need to be root or elevated privileges with sudo.
+ - The users and groups have to exist before we can change ownership to them.
+ - You can get a list of existing users by viewing the /etc/passwd file.
+ - You can get a list of existing groups by viewing the /etc/group file.
+
+chown Syntax
+	chown [options] <user>:<group> <file>
+
+chown user1 file.txt
+	Setting the User Owner
+
+chown :accounting file.txt
+	Setting the Group Owner
+
+chown User1:accounting file.txt
+	Setting User and Group Owners
+
+Exercise with ownership:
+mkdir ownexercise
+cd ownexercise/
+pwd
+touch file.txt
+sudo useradd testuser
+cat /etc/passwd
+sudo groupadd testgroup
+cat /etc/group
+sudo chown testuser:testgroup file.txt
+ls -l
+
+chown -R <user>:<group> /home/<user>
+	Ensure that all files in a user's home directory are owned by the user and their primary group.
+	-R = recursively
+
+==========
+
+Permissions using the numeric method
+------------------------------------
+
+Permission Methods
+ - Numeric method
+ - Symbolic method
+
+Numeric Mode
+Mode	Value
+Read	4
+Write	2
+Execute	1
+
+ - The command we use to set permissions is chmod (change mode).
+ - Initial permissions are assigned to new files based on the value of the umask.
+
+chmod Syntax
+	chmod [options] <permissions> <filename>
+	chmod 750 file.txt
+
+Exercise with permissions:
+mkdir permexercise
+cd permexercise/
+touch file.txt
+ls -l
+chmod 750 file.txt
+	User Owner = read/write/execute
+	Group Owner = read/execute
+	Other = no permissions
+ls -l
+
+==========
+
+Permissions using the symbolic method
+-------------------------------------
+
+chmod u=rwx,g=rx,o= file.txt
+	user = read/write/execute
+	group = read/execute
+	other = none
+ - With symbolic method, we can also add permissions by changing the equal sign to a plus, or subtract permissions with a minus.
+
+chmod u+rwx file.txt
+	Add rwx to a user
+
+chmod o-x file.txt
+	Take execute permissions away from other
+
+ - You can also group the positions:
+	Take away execute for user, group, and other:
+	chmod ugo-x file.txt
+	Alternatively, we can use a for all
+	chmod a-x file.txt
+
+sudo useradd bob
+sudo chmod -R a-x /home/bob
+	Remove all execute permissions for every file in /home/bob
