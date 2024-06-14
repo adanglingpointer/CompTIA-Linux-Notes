@@ -395,3 +395,190 @@ chmod o-x file.txt
 sudo useradd bob
 sudo chmod -R a-x /home/bob
 	Remove all execute permissions for every file in /home/bob
+
+==========
+
+Initial permissions using umask
+-------------------------------
+
+ - When files are created, initial permissions are applied auotmatically.
+ - These permissions are calculated based on a bit mask called umask
+
+umask
+	View umask
+		0022
+	Can be either three characters or four, can leave leading zero on or off for standard permissions
+	umask isn't the same format as numeric permissions such as 754
+umask -S
+	View umask in symbolic notation
+		u=rwx,g=rx,o=rx
+
+Initial Directory Permissions
+	777 = Max Initial Directory Mode
+ 777 Max Initial Directory Mode
+-022 umask
+----
+ 755 Initial Directory Mode
+	rwxr-xr-x
+
+Initial Directory Permissions
+	666 = Max Initial File Mode
+	For security reasons we don't allow execute permissions on files by default
+	This keeps files from being automatically executable after being copies from one place to another,
+	 including files downloaded from the internet
+ 666 Max Initial File Mode
+-022 umask
+----
+ 644 Initial File Mode
+	rw-r--r--
+
+ - We can temporary change our umask by using the umask command.
+
+umask 0002
+	rwxrwxr-x default permissions for directories, rw-rw-r-- for files
+
+ - This only works for our current login session.
+ - If a user wants to change their umask, they can add it tot heir bash startup file using an editor.
+
+vi ~/.bashrc
+	add the line:
+	umask 0002
+
+ - If an administrator wants to change the system-wide umask, they can add it to a file in /etc/profile.d
+
+sudo vi /etc/profile.d/umask.sh
+
+if [ "$UID" -ge 1000 ] ;
+	umask 0002
+fi
+
+-ge for greater than or equal to
+
+==========
+
+Special file bits: SUID and SGID
+--------------------------------
+
+ - There are additional special bits for privilege escalation on executable files.
+
+Special Bits on Files
+ - Set User ID (SUID)
+	- Run as user owner of the file
+ - Set Group ID (SGID)
+	- Run as group owner of the file
+ - Sticky
+	- Historically in Unix, if you set the Sticky bit on a program, it would remain in swap making it execute
+	 faster the next time it is run.
+	- Some versions of Unix and BSD still maintain this functionality, but it has never existed in Linux.
+	- Linux caches all executables for faster execution anyway, so there's little need for a Sticky bit.
+
+ls -l /usr/bin/su
+	-rwsr-xr-x. 1 root root 50448 Apr 24 05:39 /usr/bin/su
+	The file /usr/bin/su is bright red
+
+ - The permissions in this case for the User Owner are rws.
+ - The s in the User Owner's execute position means that we have SUID bit set.
+ - If the s is lowercase then the underlying execute bit is also set.
+ - If the S is uppercase then the execute permissins are not set.
+
+ - When the S exists in the Group Owner permissions, then the SGID is set.
+	-rwxr-sr-x.
+ - Lowercase s = execute permissions are set
+ - Uppercase S = execute permissions are not set
+
+ - When the SUID bit is set, and if regular users such as user1 executes the command, their privileges get elevated to that of the User Owner's.
+ - In our example, user1 would be executing the su command as root.
+	-rwsr-xr-x. 1 root root 50448 Apr 24 05:39 /usr/bin/su
+ - This means this command would have all of the power of the root user.
+
+Special Bit Values
+
+Mode	Value
+SUID	4
+SGID	2
+Sticky	1
+
+-rwsr-xr-x. 1 root root 50448 Apr 24 05:39 /usr/bin/su
+	SUID is set so 4 + 0 + 0 = 4
+	Our original permissions are 755
+	Add the 4 in front for total permissions in numeric mode with SUID set are 4755
+
+sudo chmod 4755 /usr/bin/su
+	Set SUID permissions
+sudo chmod u+s /usr/bin/su
+	Set SUID permissions in symbolic mode
+
+ - The SGID bit is very similar to SUID.
+ - When we have SGID set, the s resides in the execute position of the Group Owner's permissions.
+ - When a regular user, such as user1 executes a command with SGID set, it runs with the privileges of the Group Owner of the file, in this example the screen group:
+	-rwxr-sr-x. 1 root screen 0 Jan 5 13:26 /usr/bin/screen
+ 2 4 4 4 SGID value is the leading 2
+ 0 2 0 0
++0 1 1 1
+--------
+ 2 7 5 5
+
+sudo chmod 2755 /usr/bin/screen
+	Set SGID permissions
+sudo chmod g+s /usr/bin/screen
+	Set SGID permissions in symbolic mode
+
+ - Because these commands allow privilege escalation without prompting for a password, it may be advantageous to know where in the file system they are for security reasons.
+ - We can use the find command to locate SUID and SGID files.
+
+sudo find / -perm -4000
+	Find all files with the SUID bit set
+
+sudo find / -perm -2000
+	Find all files with the SGID bit set
+
+==========
+
+Special directory bits: SGID and sticky bit
+-------------------------------------------
+
+Special Bits on Directories
+ - Set user ID (SUID)
+	- No effect on directories
+ - Set group ID (SGID)
+	- Provides group inheritance for files and directories created inside the directory
+ - Sticky
+	- Only owners can delete their own files
+
+cd /home
+pwd
+sudo mkdir accounting
+ls -l
+	Since we created the directory using sudo it's owned by the root user and the root group
+sudo groupadd accounting
+sudo chown :accounting accounting/
+sudo chmod 2770 accounting
+	Add the SGID bit as well as right permissions for the Group Owner
+ls -l
+	drwxrws---.	2 root	accounting	6 Oct	5 14:09 accounting
+
+SGID Bit on Directories
+
+	drwxrws---.	2 root	accounting	6 Oct	5 14:09 accounting
+
+ - SGID bits on directories represent the only inheritance in standard Linux permissions and ownership.
+ - All files and directories created inside of your accounting directory will inherit the Group Owner, accounting.
+ - If user1 creates a file in the accounting directory, it will be owned by user1 and the accounting group.
+	-rwxr-sr-x.	1 user1	accounting	0 Jan	5 13:36 /home/accounting/file.txt
+
+ - This allows us to create a directory for group collaboration.
+ - For our setup, all users creating files in this directory would need to belong to the accounting group in order for them to have right access.
+
+sudo useradd -G accounting ted
+	-G = supplemental group
+sudo passwd ted
+cat /etc/group
+	accounting group with ted in it at the bottom
+su - ted
+cd /home/accounting/
+pwd
+touch file.txt
+ls -l
+	-rw-rw-r--. 1 ted accounting 0 Oct 5 14:14 file.txt
+exit
+
