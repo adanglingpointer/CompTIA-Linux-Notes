@@ -582,3 +582,211 @@ ls -l
 	-rw-rw-r--. 1 ted accounting 0 Oct 5 14:14 file.txt
 exit
 
+Setting a sticky bit:
+
+cd /home
+sudo mkdir stickydir
+sudo chmod 1777 stickydir/
+ls -l
+	drwxrwxrwt. 2 root	root	6 Ocr 5 14:14 stickydir
+	We should see that our directory has a t in the execute position of the permissions of other.
+	t = execute for other is set
+	T = execute for other is not set
+
+ - The purpose of the sticky bit on a directory is to keep users from deleting or moving each other's files.
+ - The sticky bit is used mainly for world writable shared directories like /tmp
+
+cd /home/stickydir
+touch file.txt
+chmod 777 file.txt
+ls -l
+	-rwxrwxrwx. 1 user1 1051 0 Oct 5 14:15 file.txt
+su - ted
+ls -l
+	-rwxrwxrwx. 1 user1 1051 0 Oct 5 14:15 file.txt
+	We can see that file.txt has twx for user, group, and other.
+	This means that we have full access to it, including delete..
+rm file.txt
+	rm: cannot remove 'file.txt': Operation not permitted
+	Even though ted has rwx permissions on the file he still can't remove it.
+ls -ld /tmp
+	d = directory
+	drwxrwxrwt. 12 root root 4096 Oct 5 14:17 /tmp
+	You should see the t in the other permissions section.
+
+==========
+
+Access control lists overview
+-----------------------------
+
+Limitations of Stndard Permissions
+ - Files and directories belong to one user
+ - Files and directories belong to one group
+ - Permissions set for "other" are not concise
+ - Inheritance only for group ownership
+ - Cannot back up and restore permissions
+ - No temporary restriction
+
+ - For example, desired permissions on /var/reports:
+	Accounting - Read, write, and execute
+	Marketing - Read and execute
+
+ - The closest we can get to satisfy these objectives using standard Linux permissions is to make the accounting group the Group Owner, and set their permissions to be rwx.
+	-rwxrwxr-x. 1 root accounting 2315 Sep 12 14:39 reports
+ - Since a directory can only be owned by one group, we have no other choice but to have the marketing group access the directory using other permissions.
+ - The problem is that everyone would be able to access the directory, not just the marketing group.
+ - Also, if we needed to set permissions for any other groups, we're stuck.
+ - Access Control Lists, or ACLs, are layered onto Linux permissions and extend them in new ways.
+
+Advantages of ACLs
+ - Permissions for multiple users on a file or directory
+ - Permissions for multiple groups on a file or directory
+ - Support permissions inheritance
+ - Easy backup and restore of permissions
+ - Easy temporary permission restriction
+
+Disadvantages of ACLs
+ - Not always installed
+ - Not built into Linux
+ - Can be turned off
+ - Require additional, unfamiliar commands
+
+File Name, User, and Group Owners
+
+# file: reports/
+# owner: root
+# group: root
+user::rwx
+group::rwx
+group:accounting:rwx
+group:marketing:r-x
+mask::rwx
+other::---
+default:user::rwx
+default:group::rwx
+default:group:account:rwx
+default:group:marketing:r-x
+default:mask::rwx
+
+Breaking it down:
+
+# file: reports/
+# owner: root
+# group: root
+	File name, User Owner, Group Owner
+
+user::rwx
+group::rwx
+	User and Group Owner permissions
+	The User Owner is root and has rwx permissions
+	The Group Owner is the root group which also has rwx permissions
+
+ - If ACLs were disabled or this drive was moved to a system that didn't use ACLs, then only root would be able to access this directory.
+ - This is a pretty safe baseline for permissions with ACLs.
+ - Now there's an ACL giving the accounting group rwx permissions and the marketing group r-x permissions.
+
+default:group:account:rwx
+default:group:marketing:r-x
+	There's also a default ACL for inheritance.
+	Any file or directory created in the reports directory would also inherit the group ACLs listed above.
+
+ - The accounting group would have twx access to future files, and the marketing group would have r-x access to future files.
+
+mask::rwx
+	The mask is the maximum allowed permissions.
+	If an admin wanted to temporarily limit access, they could just take permissions away from the mask.
+
+ - ACLs are not built into Linux, but they are turned on by default in Enterprise Linux 8.
+
+==========
+
+Read access control lists
+-------------------------
+
+ - If ACLs are not installed, you'll get an error message saying they are not supported.
+ - Once they're installed, you'll need to mount the file system with ACLs turned on.
+
+mkdir ~/aclexercise
+cd ~/aclexercise
+pwd
+touch aclfile
+ls -l
+getfacl aclfile
+	# file: aclfile
+	# owner: user1
+	# group: user1
+	user::rw-
+	group::rw-
+	other::r--
+getfacl -t aclfile
+	Display in tabular format
+	# file: aclfile
+	USER	user1	rw-
+	GROUP	user1	rw-
+	other		r--
+
+setfacl -m user:root:rwx aclfile
+	Set an ACL for the root user.
+ls -l
+	-rw-rwx--+ 1 user1 user1 0 Apr 18 16:11 aclfile
+	The symbol after permissions is now a plus, this tells you an ACL exists
+getfacl -t aclfile
+	# file: aclfile
+	USER	user1	rw-
+	user	root	rwx
+	GROUP	user1	rw-
+	mask		rwx
+	other		r--
+
+getfacl -R /home > home-perms.txt
+	-R = recursive
+	Permissions can be stored to this file and then restored later.
+
+ - A message will tell you that permissions were stored without the leading forward slash.
+	getfacl: Removing leading '/' from absolute path names
+ - This means none of the permissions are stored with an sbolute path name.
+ - To restore them, you'd need to go back to this exact directory before running the restore command.
+ - This file contains the permissions and ownership for all files in /home.
+
+==========
+
+Set access control lists
+------------------------
+
+Syntax for setfacl:
+
+setfacl -m user:<username>:<permissions> <file>
+	-m = modify
+setfacl -m u:user1:rwx /home/file.txt
+
+cd ~/aclexercise/
+touch datafile.txt
+sudo useradd bob
+sudo groupadd accounting
+sudo groupadd marketing
+cat /etc/passwd
+cat /etc/group
+setfacl -m user:bob:rwx datafile.txt
+getfacl -t datafile.txt
+	# file: datafile.txt
+	USER	user1	rw-
+	user	bob	rwx
+	GROUP	user1	rw-
+	mask		rwx
+	other		r--
+
+setfacl -m group:<groupname>:<permissions> <file>
+
+setfacl -m group:test:rwx file.txt
+	The group has to exist or it will give you a strange error message where the error starts near character 7.
+
+setfacl -m user:bob:rwx,group:accounting:rx datafile.txt
+	Set user ACL as well as group ACL
+	Same as: setfacl -m u:bob:rwx,g:accounting:rx datafile.txt
+
+ - If we set a user ACL and do not specify the user, it sets the standard permissions for the User Owner.
+
+setfacl -m user::rwx datafile
+is the same as
+chmod u=rwx datafile.txt
+
