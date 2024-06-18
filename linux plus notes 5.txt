@@ -790,3 +790,181 @@ setfacl -m user::rwx datafile
 is the same as
 chmod u=rwx datafile.txt
 
+Set ACLs recursively:
+
+sudo setfacl -R -m user:bob:rwx /home/bob
+	We have to elevate privileges because we're setting ACLs on someone else's files
+
+==========
+
+Configure inheritance with default access control lists
+-------------------------------------------------------
+
+ - Standard Linux permissions only have one type of inheritance in the form of the SGID bit on directories.
+ - In that case, the files and directories created inside inherit the Group Owner of the parent directory, which there can only be one of.
+ - For example, is a user named bob creates files in the directory named datadir, the user owner would be bob but the group owner would be accounting due to the SGID bit.
+ - Only the Group Owner of the parent directory is being inherited, and not the permissions.
+
+ - ACLs go much further as they let files and directories inherit any number of user or group permissions.
+ - These ACLs are called default ACLs.
+
+ - If you want to allow a user to access a directory, you set a regular file ACL on the directory.
+ - If you want that user to access all files and directories created in the future inside of the directory, then set a default ACL.
+ - Usually, you'll need to do both of these operations.
+
+cd ~/aclexercise/
+mkdir data
+touch data/file.txt
+touch data/photo.jpg
+cat /etc/passwd
+	verify we have a user named bob
+	sudo useradd bob
+setfacl -m user:bob:rwx data
+getfacl -t data
+	# file: data
+	USER	user1	rwx
+	user	bob	rwx
+	GROUP	user1	rwx
+mask			rwx
+other			r-x
+
+setfacl -R -m user:bob:rwx data
+	Now all files that currently exist in the directory are accessible to bob as well.
+setfacl -d -m user:bob:rwx data
+	-d = default
+	Create a default ACL for any future files that will be created in the directory.
+touch aclfile.txt
+	Create as any user besides bob, ie. user1
+getfacl -t aclfile.txt
+	# file: aclfile.txt
+	USER	user1	rw-
+	user	bob	rwx
+	GROUP	bob	rwx
+	mask		rw-
+	other		r--
+
+==========
+
+Delete access control lists
+---------------------------
+
+cd ~/aclexercise
+mkdir acldir
+setfacl -m user:root:rwx acldir
+setfacl -m group:root:rwx acldir
+setfacl -m group:audio:rwx acldir
+setfacl -d -m user:root:rwx acldir
+getfacl aclfile
+
+ - We use setfacl to delete ACLs.
+
+Delete ACL Syntax:
+
+Function		Option
+Remove specific ACL	-x
+Remove all default ACLs	-k
+Remove all ACLs		-b
+
+Deleting Specific ACLs:
+
+setfacl -x user:root accounting/
+
+setfacl -x root accounting/
+	Of you just specify the name that the ACL is set on, then setfacl will assume it is a user ACL.
+
+Deleting Specific Default ACL:
+
+setfacl -x default:user:root accounting/
+
+Deleting all Default ACLs:
+
+setfacl -k accounting/
+
+Deleting all ACLs:
+
+setfacl -b accounting/
+
+
+getfacl acldir
+setfacl -x group:root acldir
+getfacl acldir
+
+setfacl -x root acldir
+getfacl acldir
+
+setfacl -k acldir
+getfacl acldir
+
+setfacl -b acldir
+getfacl acldir
+	We've removed all ACLs
+
+setfacl -R -b acldir
+	Recurse into acldir and remove ACLs from any files inside it, as well as the ACLs on the acldir itself.
+
+==========
+
+Troubleshoot access control
+---------------------------
+
+ - Check to see if the account is in good standing, or locked, using the passwd command.
+
+Check status of user account:
+	sudo passwd -S <username>
+
+ - If there's an l after the name, it's locked.
+ - If the user is able to login, then move on to the file ownership and permissions.
+	Look at file permissions, group ownership, and ACL if it has one
+
+ls -l finances.cvs
+	See permissions.
+
+ - Take note of which user and group owns the file.
+ - A user can only gain access to a file if they have traverse permissions to it, so check that first.
+ - Have them cd into each directory of the path until they can see the file.
+ - Then check the ACL on the file itself.
+
+getfacl finances.csv
+
+ - A user can only access the file as the file's owner, a member of the file's group, through an access control list applied to the file, or under the category of other (not recommended).
+
+ - Execute permissions
+ - Privilege escalation
+
+Check sudo permissions:
+	less /etc/sudoers
+
+ - Perhaps the sudoers file doesn't have a specific access control line for the user, but the user may need to be in a sudo or OS group, such as admin, to elevate privileges.
+ - If there is a line allowing members of the admin group to use sudo, ensure the user is in that group by viewing the /etc/group file.
+
+ - In rare occasions, a file needs to have SUID or SGID bits set to elevate privileges.
+ - Check to see if they've been removed using rpm.
+
+rpm -V <package name>
+	If there's a capital M in the output, then the permission mode has changed.
+	If there's a u or g then the user or group have changed
+rpm --setperms <package name>
+rpm --setugids <package name>
+
+ - Unfortunately, you can't reset permissions using the package manager on Debian based systems, so this is an RPM only trick.
+
+ - The next step is to ensure the program resigns at a volume with exec turned on.
+ - Use the mount command to verify that applications are allowed to be executed at the file's path.
+
+ - Check mount options.
+tmpfs on /tmp type tmpfs (rw,nosuid,nodev,seclabel,inode64)
+
+ - Look for noexec on the mount point, or nosuid and nosgid, if those permissions are required.
+
+ - Failed authentication
+	Authentication logs
+	/var/log/auth.log - Debian
+	/var/log/secure - RHEL based
+
+ - Mandatory access control (MAC)
+	SELinux logs
+
+Check is SELinux is enabled:
+	sestatus
+
+ - Audit MAC logs
