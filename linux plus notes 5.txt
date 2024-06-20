@@ -964,7 +964,89 @@ tmpfs on /tmp type tmpfs (rw,nosuid,nodev,seclabel,inode64)
  - Mandatory access control (MAC)
 	SELinux logs
 
-Check is SELinux is enabled:
+ - Check is SELinux is enabled:
 	sestatus
 
- - Audit MAC logs
+ - If SELinux is enabled, then Audit MAC logs
+
+Check MAC logging:
+	sealert -a /var/log/audit/audit.log
+	less /var/log/messages
+
+Check is AppArmor is enabled
+	aa-status
+
+==
+
+Quiz notes:
+
+Default ACLs provide inheritance for user and group permissions.  Default ACLs only provide inheritance.  Default ACLs do not provide ownership inheritance.
+
+SGID bits on directories allow the group owner to be inherited.
+
+What do both SUID and SGID bits provide on a file?
+Privilege escalation.  On a file SUID and/or SGID will provide privilege escalation. Not so on a directory.
+
+
+==========
+
+12. Mandatory Access Control
+============================
+
+Set enforcing and permissive modes for SELinux
+----------------------------------------------
+
+Discretionary Access Control
+ - Discretionary access control is a means of restricting access to objects based on the identifty of subjects and/or the groups to which they belong.
+ - Standard Linux permissions, Access Control Lists, SUID and SGID special bits, as well as su and sudo are examples of discretionary access control.
+ - Access control is discretionary in that a subject with certain permissions can pass those permissions on to other subjects.
+
+Mandatory Access Control
+ - Mandatory access control is an additional layer over discretionary access control.
+ - The operating system constrains the ability of a subject to access an object.
+ - Mandatory access control is made up of rules allowing subjects some sort of access to objects.
+ - Subjects are usually processes which are run by users.
+ - Objects are the resources they're trying to access such as files, directories, IO devices, pipes, network ports.
+ - The access is an action performed by the subject on the object, such as read, write, delete or create.
+
+ - The security context, or label, is the tags that SELinux stores for subjects and objects.
+ - All subjects and objects will have a security context.
+ - This security context is stored in the extended attribute section of the file metadata.
+
+Process of subjects accessing objects, adding in SELinux bits:
+ - The subject, Vim, requests access to the object which is file.txt
+ - The SELinux security server queries the SELinux policy database of rules.
+ - If based on those rules, permission is granted, then Vim will access file.txt
+ - If permission is not granted, then a denied access message will be added to the access vector cache.
+ - These messages are available through the operating system log files.
+
+SELinux has several operating modes.
+ - Enforcing mode, where the security policy is being enforced.
+ - Permissive mode, where the policy is consulted and messaged are printed, but the policy is not enforced.
+	- This is good for troubleshooting SELinux policy issues.
+	- The application is allowed to run and all policy violations are logged.
+	- There are times when having SELinux set to permissive will still deny a subject accessing an object.
+ - Disabled, SELinux is turned off and no mandatory access control system is in place.
+
+SELinux has different enforcement policies.
+ - Type enforcement is the default type of mandatory access control used in the targeted policy.
+ - Role-based access control which assigns a role to SELinux users and enforces access control that way.
+
+SELinux also supports multi-level security, which assigns a security level to various subjects and objects.
+ - For instance, in a military environment, you may have a certain clearance level which gives you access to certain resources.
+ - Multi-category is similar in that it categorizes objects and makes policy decisions based on the category.
+	- This is useful with containerization of processes.
+
+sestatus
+	Show current SELinux mode.
+getenforce
+	Show current SELinux mode.
+sudo setenforce permissive
+	Set SELinux mode.
+	This is temporary.
+	Otherwise, we'd have to edit the /etc/selinux/config file and reboot
+less /etc/selinux/config
+
+ - If you want to disable SELinux, it cannot be done live.
+ - The /etc/selinux/config file needs to be edited and the system has to be rebooted.
+
