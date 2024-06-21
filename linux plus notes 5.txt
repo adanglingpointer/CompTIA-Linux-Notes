@@ -1050,3 +1050,93 @@ less /etc/selinux/config
  - If you want to disable SELinux, it cannot be done live.
  - The /etc/selinux/config file needs to be edited and the system has to be rebooted.
 
+==========
+
+List and identify SELinux file and process context
+--------------------------------------------------
+
+ - SELinux subjects are usually users and processes.
+ - All subjects and objects in SELinux have a security context or label.
+ - To get the security context of our user, we'll use the id command.
+
+id -Z
+	Show security context of our user
+	unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+	
+ - unconfined_u = our SELinux user
+ - unconfined_r = our role for role-based access control
+ - unconfined_t = our type for type enforcement
+ - The last section is the security level used by multilevel and multi-category security.
+
+ps -eZ
+	Look at the security context of all running processes
+
+ - Files also have a security context, as they are object.
+
+ls -lZ
+	Get the security context of files
+
+ - SELinux supports domain transitioning
+	- Subjects can move from one type to another if allowed in the security policy
+
+ls -lZ /usr/bin/passwd
+	The passwd command's type is passwd_exec_t
+	When passwords are set they are written to the /etc/shadow file
+
+sudo ls -lZ /etc/shadow
+	The /etc/shadow's type is shadow_t
+
+ - You might think that as a rule in SELinux that sllows subjects with a type of password_exec_t to read and write to objects with a type of shadow_t, but that isn't quite how it works.
+ - As a test, open a new terminal and run `passwd` but don't answer the prompt
+ - In a different terminal run `ps -eZ`
+	- Now we see that the running passwd command's type is passwd_t, and not passwd_exec_t.
+ - When the passwd command is run, it is allowed to transition to the password_t type.
+ - There is a rule that allows a ubject of type password_t to write to an object with a type of shadow_t.
+ - Without transitioning to the password_t type, the password command would not be able to write to the shadow file.
+ - Processes can transition from one type to another temporarily to execute code n that type if the security policy allows it.
+ - This is similar to the sudo command.
+	- When we execute a command using sudo we transition to the superuser temporarily.
+
+==========
+
+Restore SELinux default file contexts
+-------------------------------------
+
+ls -lZ /home
+	The security context of /home is user_home_dir_t
+touch newfile.txt
+ls -lZ newfile.txt
+	It's type is user_home_t
+changecon -t etc_t newfile.txt
+	Change the context of newfile.txt to etc_t
+	We don't need to elevate privileges when we're doing this to our own files
+ls -lZ
+	Verify the type is etc_t
+restorecon newfile.txt
+	The policy database knows what the security context of the files in /home should be
+ls -lZ
+	Now we can see the type has changed to user_home_t
+
+ - If you want to reset the security context of every file in the operating system, you'll want to relabel the drive.
+ - This means that SELinux will restore or relabel every file back to its default security context.
+ - To do so, we just need to create a hidden file in the root directory named .autorelabel, and reboot.
+
+sudo touch /.autorelabel
+	The next time you reboot, the security context of all files in the entire operating system will be set
+	 back to the default context.
+	Expect the boot process to take longer this one time.
+	When it's done relabeling all files, it deletes the hidden autorelabel file that we created.
+
+ - If you're positive that you want a file in your home directory to have a different security context, and you don't want a restorecon or a relabel to set, then you can change the policy database using the semanage command.
+
+sudo semanage fcontext -a -t etc_t /home/user1/newfile.txt
+	This will add an entry for the type etc_t on the file named newfile.txt
+sudo semanage fcontext -l | grep newfile
+	-l = list
+restorecon newfile.txt
+	Restore
+ls -lZ newfile.txt
+
+ - It's best to change the policy and then use restorecon to set the context, rather than use changecon.
+ - Changecon can be used for temporary context changes to troubleshoot.
+
