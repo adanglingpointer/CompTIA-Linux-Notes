@@ -1140,3 +1140,143 @@ ls -lZ newfile.txt
  - It's best to change the policy and then use restorecon to set the context, rather than use changecon.
  - Changecon can be used for temporary context changes to troubleshoot.
 
+==========
+
+Use booleans to modify SELinux behavior
+---------------------------------------
+
+ - SELinux has booleans, which are on/off switch to activate or deactivate certain functions.
+	- For example, by default Mozilla plugins can't use GPS.
+ - To get a list of SELinux booleans, use the getsetbool command.
+
+getsebool -a
+	About 300 booleans
+getsebool mozilla_plugin_use_gps
+	mozilla_plugin_use_gps --> off
+sestatus -b
+	Another way to list booleans
+sudo semanage boolean -l
+	A third way to list booleans, along with a short description
+sudo setsebool mozilla_plugin_use_gps on
+	Set the boolean to on
+
+ - This does not survive a reboot though.
+ - If you want to make the boolean persistent, you need to add it to the policy.
+
+sudo setsebool -P mozilla_plugin_use_gps on
+	Add to the policy to keep change persistent
+sudo semanage boolean -l | egrep 'SELinux|mozilla_plugin_user_gps'
+	Using egrep in alternation to show both the header and the boolean.
+
+SELinux booleans	State	Default	Description
+mozilla_plugin_use_gps	( on ,	on )	Allow mozilla to plugin use gps
+
+ - Since we've added the boolean to the policy, it's now on by default.
+
+==========
+
+Diagnose routine SELinux policy violations
+------------------------------------------
+
+ - In this exercise, you'll be modifying critical system files and security context in order to break it.
+ - Before you begin, you might want to create a snapshot of your VM just in case.
+
+SELinux Logging
+ - SELinux logs alerts when it's running in either enforcing or permissive mode.
+ - If audit D service is running:
+	/var/log/audit/audit.log
+ - If audit D service is not running:
+	/var/log/messages
+ - sudo tail -f <log file>
+
+ - Because our VM is new, there may not be any SELinux messages to look at, so lets generate one.
+ - To do so, we'll change the security context of the /etc/shadow file
+
+sudo ls -lZ /etc/shadow
+	Look at original security context
+	We can see that the security context is shadow_t
+sudo changecon -t etc_t /etc/shadow
+	Change security context to etc_t
+sudo ls -lZ /etc/shadow
+	Verify change
+
+sudo tail -f /var/log/audit/audit.log
+
+ - Open another terminal.
+
+passwd
+	It will fail
+	passwd: Authentication toekn manipulation error
+
+ - You may have fotten an SELinux alert message.  If so, click on it to get more information.
+ - If you did not get a message, you can bring up the SE Alert browser by going into overview mode and typing in sealert and hitting enter.
+ - Click troubleshoot button, it explains the problem and will give you several solutions.
+ - Usually the best, least intrusive solution is at the top.
+ - The bottom solution actually creates a new SELinux policy module with rules.
+	# ausearch -c 'passwd' --raw | audit2allow -M mypasswd
+ - The ausearch command searches the audi logs for the word password and then sends this to the audit2allow command, which builds a new security policy module allowing for the action to succeed.
+ - Normally, we consider creating a new policy module the last resort, because messing witht he SELinux security policy can be complex.
+
+ - Exit the SE Alert browser and go back to your original terminal.
+ - Let's analyze the audit.log entires.
+ - We have two error message related to the passwd command not being able to write to the /etc/shadow file.
+ - Each entry starts with the type equals followed by the audit log error type.
+
+type=AVC msg=audit(187237.364:2669): avc: denied { create }
+for pid=202425 comm="passwd" name="nshadow"
+scontext=unfined_u:unconfined_r:passwd_t:s0-s0:c0.c1023
+tcontext=system_u:object_r:etc_t:s0 tclass=file permissive=0
+
+type=USER_CHAUTHTOK msg=audit(187237.364:2670): pid=202425 uid=1000 auid=1000 ses=19
+subj=unconfined_u:unconfined_r:passwd_t:s0-s0:c0.c1023
+msg='op=PAM:chauthtok grantors=? acct="user1" exe="/usr/bin/passwd"
+hostname=rhhost1.localnet.com addr=? terminal=pts/2
+res=failed'UID="user1" AUID="user1"
+
+ - The first error says AVC which stands for Access Vector Cache.
+ - This tells us it is an SELinux error.
+ - We can see that the action that was denied was create for process ID 202425.
+ - The command name is passwd.
+ - The context of the subject is passwd_t
+ - The context of the object is etc_t, which we know becayse we set it.
+
+ - The second message has a type of USER_CHAUTHTOK (change auth token).
+ - It's the same PID #
+ - The subject type is passwd_t again.
+ - msg='op=PAM:chauthtok
+	The operation was a Pluggable Authentication Module trying to change the authentication token
+ - acct="user1"
+	It was for the user1 account
+ - exe="/usr/bin/passwd"
+ - res=failed
+	Result = failed
+
+SELinux Solutions
+ - Change a boolean to allow the action
+	- First check `sudo semanage boolean -l` for a short description
+	- sudo setsebool -P <boolean> on
+ - Change a file or directory type
+	- chcon/semanage
+	- These changes only last until an admin does a restorecon or a system relabel happens
+	- Use semanage to change the files context in the security database to make it persistent ( ? )
+	- Then use restorecon to change the context of the file.
+	- A real world example would be if you wanted to put your MySQL database in a non-standard location.
+	- You'd need to update the default security context for the MySQL directory and the policy
+	 and then run restorecon on the directory and the files.
+ - Create a new security policy module
+	- Not a bad option, just the most intrusive.
+	- When creating a policy module, we're actually modifying the security policy to allow something that
+	 was being denied.
+	- It's often better to find out why it was being denied first, and then fix it instead of modifying the
+	 security policy itself.
+
+Troubleshoot SELinux
+ - Put SELinux in permissive mode
+ - Run the applicaiton that was denied
+ - Search through audit logs
+ - Look for SELinux desktop notifications
+ - Follow instructions in the SELinux alert browser
+
+ - Before ending this course, let's put the context of our /etc/shadow file back to the way it was.
+
+sudo restorecon /etc/shadow
