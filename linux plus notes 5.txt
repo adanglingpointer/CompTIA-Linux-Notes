@@ -1280,3 +1280,69 @@ Troubleshoot SELinux
  - Before ending this course, let's put the context of our /etc/shadow file back to the way it was.
 
 sudo restorecon /etc/shadow
+
+==========
+
+Maintain security context when managing files
+---------------------------------------------
+
+ - By default, when you copy a file to a new location, it inherits the security context of the directory it's in according to the security policy.
+ - If you a copy a file to /home, the type will be user_home_dir_t.
+ - If you want to keep the original security context of the file, you need to provide additional options to commands, such as cp
+
+cp -a
+	-a is for archive and perserves permissions, access control list, extended attributes, 
+	 and SELinux Security context.
+mv
+	The mv command preserves attributes by default because it just moves the files and doesn't change their
+	 metadata.
+tar --selinux
+	When you want to back up your system using tar, you'll want to pass the --selinux option to preserve
+	 security context.
+rsync -a X
+	To copy files from one host to another while preserving security context, use rsync with the -X option
+
+ - Be careful with these commands.  Preserving security context may not be what you want.
+ - The safe option would be to copy or move the files and then do a restorecon to restore the context to the policy default.
+
+==========
+
+Use AppArmor
+------------
+
+ - There are two mandatory access control systems for Linux: SELinux and AppArmor
+
+SELinux
+ - Created by the National Security Administration
+
+AppArmor
+ - Created by Immunix Linux.
+ - Novell bought Immunix and it became part of SUSE Linux.
+ - AppArmor gained popularity when Ubuntu started using it.
+
+ - SELinux and AppArmor as mandatory access control systems attempt to do the same thing: supplement the discretionary access control systems, such as standard Unix permissions and file access control list.
+ - However, they go about this differently.
+
+ - SELinux is a very complex system that supports multi-level security, which is useful for government projects as well as type enforcement.
+ - SELinux is Inode-based so all files are labeled with a security context. This means that if you move an inaccessible file or you create a hard link to that inaccessible file, it will still be inaccessible.
+ - Because the security context is done at a file system level, it only works on file systems that support extended attributes, so it will not work on non-Linux file systems such as NFS or NTFS.
+ - It's used by Red Hat, Fedora, CentOS, Android, and CoreOS; available on SUSE, Debian, and Ubuntu as an option.
+
+ - AppArmor is a path-based system.
+ - It has a database of file paths and the rules are based on those paths.
+ - If you moved an inaccessible file or created a hard link to it, then it will now be accessible. This is the downside to path-based enforcement.
+ - It does support non-Linux based file systems such as NFS and NTFS.
+ - AppArmor is easier to use and implement than SELinux as AppArmor is a simpler system.
+ - It does not have some of the advanced capabilities of SELinux, such as multi-level security.
+ - AppArmor is limited to recreating discretionary access control at the mandatory access control level.
+ - SUSE, Debian, and Ubuntu primarily use AppArmor.
+
+AppArmor Modes
+ - Complaining
+	Useful for creaing AppArmor policies as it logs violations, but doesn't enforce them.
+	This would be similar to permissive mode on SELinux.
+ - Enforcing
+	For production, and enforces the access control.
+
+ - There are security profiles for different applications with AppArmor.
+ - The base installation of Ubuntu comes with some profiles, but if you want to add more, you'll need to install a couple of packages.
