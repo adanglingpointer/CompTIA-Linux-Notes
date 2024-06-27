@@ -1,0 +1,71 @@
+13. System Security
+===================
+
+About pluggable authentication modules
+--------------------------------------
+
+ - Most services in Linjux use the same authentication system called PAM.
+ - Pluggable Authentication Modules
+ - Modular system, one authnetication method can be swapped out for another
+ - Configurable and expandable
+ - Redirectable authentication methods
+ - PAM configuration files are text
+	- Each service that uses PAM will have a service file in /etc/pam.d
+
+ - Sun Microsystems proposed PAM in the mid 90s, and now it handles the authentication in most Unix-like operating systems including Linux.
+
+cd /etc/pam.d
+ls
+cat su
+
+ - Each line in PAM service file will have three or four columns, depending on options.
+
+account		sufficient	pam_success_if.so	uid = 0			use_uid		quiet
+Module Type	Control Flag	The PAM Module		Module Arguments
+
+ - There are four different module types
+	- Account - validates the account and performs non authentication based account maintenance
+		It also restricts or grants access based on other factors
+	- Auth - handles authentication of users and sets up credentials
+		It handles challenge response requests and hardware tokens
+	- Password - responsible for updating authentication methods and user passwords
+	- Sessions - handles session specific tasks before and after login
+		Such as mounting the user's home directory or providing an audit trail of logins
+
+ - Control flags decide if authentication will continue through the authentication stack, or whether it will fail.
+	- Required - If the item fails, then authentication fails, but only after remaining modules are processed.
+	- Requisite - If the item fails, the authentication fails immediately.
+	- Include - Allows external module stacks to be included.
+		If an included module stack fails, then the rest of the module stack is skipped
+	- Substack - Allows external module stacks to be included.
+		If a module stack fails, then only the substack is skipped.
+	- Optional - Not required for authentication.
+
+ - If you want to know if a program has PAM support, you can double check this with the LDD command.
+ - LDD prints the program's shared library dependencies
+
+ldd /bin/su
+	libpam.so.0 => /lib64/libpam.so.0
+
+==========
+
+Use login counters
+------------------
+
+To get a quick list of which PAM Modules are installed:
+	cd /usr/lib64/security/
+	ls
+
+pam_access.so = who can authenticate and from where
+
+ - You can turn off SSH root logins in the SSH configuration file.
+ - This makes SSH more secure but creeates a problem if you do need SSH root access.
+ - Using PAM Access, you can restrict root from logging in through SSH from every host but one.
+
+pam_exec.so = allows you to call commands after authentication
+
+ - For example you may want to rebuild an external password database every password change.
+
+pam_limits.so = allows configuring resource limits for user sessions, including memory and CPU time
+
+ - These limits also affect the root user.

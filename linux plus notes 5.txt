@@ -1346,3 +1346,34 @@ AppArmor Modes
 
  - There are security profiles for different applications with AppArmor.
  - The base installation of Ubuntu comes with some profiles, but if you want to add more, you'll need to install a couple of packages.
+
+sudo apt install apparmor-profiles apparmor-profiles-extra
+sudo aa-status
+	apparmor module is loaded.
+	69 profiles are loaded.
+	47 profiles are in enforce mode.
+
+Set profile to enforce:
+	sudo aa-enforce /etc/apparmor.d/usr/sbin/cupsd
+
+Set profile to complain
+	sudo aa-complain /etc/apparmor.d/usr/sbin/cupsd
+
+Disable a profile
+	sudo apparmor_parser -R /etc/apparmor.d/usr/sbin/cupsd
+	You can add a profile to the kernel by using -a
+
+cd /etc/apparmor.d
+ls
+	List profiles that are not disabled, as text files we can view
+	Dots replace forward slashes and denote the path of the item
+	For example: usr.sbin.cupsd = /usr/sbin/cupsd
+
+cat usr.bin.firefox
+
+-----
+
+Quiz notes:
+To manually change the security context of a file we would use the chcon command.
+Most commands that support SELinux use the same option to display SELinux security context. This option is -Z.
+To change the persistent state of SELinux one needs to edit */etc/selinux/config*.
