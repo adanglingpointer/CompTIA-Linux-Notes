@@ -69,3 +69,137 @@ pam_exec.so = allows you to call commands after authentication
 pam_limits.so = allows configuring resource limits for user sessions, including memory and CPU time
 
  - These limits also affect the root user.
+
+PAM Login Counter
+ - pam_tally
+	In legacy systems
+ - pam_tally2
+	Options in PAM config
+ - pam_faillock
+	Replaces pam_tally2, it's easier to configure with a better code base
+	Options in config file
+
+ - pam_faillock maintains a list of failed authentication attempts per user during a specified interval and locks the account in case they exceed the configured threshold.
+
+Faillock Module Options
+ - preauth - call before auth
+	Needs to be specified if the module is called before the mdoules that ask for credentials.
+	When a user is going to be denied login based on previous attempts before they even get to enter
+	 credentials.
+ - authfail - call after fail
+	Will log the failure to the appropriate tally file.
+ - authsucc - call after success
+	Will clear the record of the user's failures if they're not currently blocked.
+	If this call is not provided then pam_faillock cannot determine between consecutive and non-consecutive
+	 authentication failures.
+
+man faillock
+man faillock.conf
+
+Faillock Module Arguments
+ - audit
+	Log the user of fail logins if they don't exist on the system.
+ - silent
+	Doesn't print messages to the user
+ - no_log_info
+	Doesn't log to the system logger
+ - local_users_only
+	Only tracks logins for local users that exist in the /etc/passwd file
+ - nodelay
+	Does not force a delay after failures
+ - deny=
+	Sets the number of consecutive failures before logging the user
+ - fail_interval=
+	The amount of time in which the failures need to occur to be considered consecutive
+ - unlock_time=
+	The amount of time in seconds before unlocking the account
+	If it is set to 0, then the account has to be manually unlocked using the faillock command
+
+Faillock Module Admin Arguments
+ - even_deny_root
+	Set the number of failures for the root account
+ - root_unlock_time=
+	The amount of time before the account is unlocked
+ - admin_group=
+	Treats users in an admin group such as wheel, the same as root
+
+ - It's recommended to store these in /etc/security/faillock.conf, rather than cryptic PAM files
+
+Example /etc/security/faillock.conf:
+
+deny=4
+unlock_time=1200
+silent
+audit
+
+Example /etc/pam.d/login:
+
+auth	[default=die]	pam_faillock.so authfail
+auth	sufficient	pam_faillock.so authsucc
+
+ - An easier way to configure PAM faillock is by using the authconfig command
+
+authconfig --enablefaillock --faillockargs="deny=4 unlock_timeout=1200" --update
+
+ - View failed logins
+faillock --user <username>
+
+ - Reset failed logins
+faillock --user <username> --reset
+
+==========
+
+Change default password policies
+--------------------------------
+
+Password Strength
+ - Linux administrators can tighten up password policies to force:
+	- Password length
+	- Unique characters
+	- Unique character classes
+	- Repeatable characters
+	- Password similarity
+		Check username and comment field of the /etc/passwd file
+
+ - The password policy is controlled by the /etc/security/pwquality.conf
+
+Password Restrictions
+
+Option		Function
+difok		Unique new characters required
+		Setting this to 0 turns off all checks against the old password, unless they are identical
+minlen		Minimum password length
+		Credits will subtract from this number
+		If you're using credits, you'll want to add one or more characters to your desired minimum
+		Cannot be set lower than six
+minclass	Unique character classes required
+		You can require characters from all four classes by setting minclass to 4
+maxrepeat	Maximum identical consecutive characters
+maxclassrepeat	Maximum identical consecutive classes
+
+ - All of these options can be turned off by setting them to 0.
+
+Password Checks
+
+Check		Description
+decoscheck	Checks GECOS field for more than three characters
+		Set to 1 to look for sequences of three characters or longer in the GECOS comment field that are
+		 also in the new password
+		It will find forward or reversed words
+dictcheck	Checks for dictionary word
+usercheck	Checks if password contains the username
+badword		List of words that cannot be in a password
+
+ - Linux has a credit system that affects the minimum allowed characters for a password
+ - Credits allow for shortening of the password length, while maintaining password strength, by using characters from different classes, like lowercase, uppercase, digits, or other characters.
+ - If your minimum password linked is nine and you configure credit for a lowercase letter, then Linux will allow an eight character password if it includes a lowercase letter.
+ - If you have a credit for an uppercase letter, as well as a lowercase letter, then Linux will allow a seven character password.
+ - If you have a credit for a digit, a lowercase letter, and an uppercase letter, it will accept a password that's six characters long.
+ - For any of these credits, setting the credit to 0 disabled it. Setting to a positive number enables it.
+ - For instance, if the credit is set to 1, then the password can be one character shorter.
+ - Setting the credit to a negative number specifies the minimum number of special characters that is required.
+
+ - Disable credit
+dcredit = 0
+
+ - Specify
