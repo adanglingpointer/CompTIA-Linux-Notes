@@ -344,7 +344,7 @@ SSH Server
 Per-user client config
  - ~/.ssh/config
 
- - The ssh directory doesn't exist until you try to connect to a server for the first time.
+ - The .ssh directory doesn't exist until you try to connect to a server for the first time.
  - A per-user client config file allows us to store information about our remote servers to make administration easier.
  - For instance, if a remote server used port 1022 and we had a private/public key pair created for it, we would have a configuration file that looked like this:
 
@@ -356,6 +356,129 @@ Host server1
 
  - Without the config file, we'd have to type more to login remotely.
 	ssh -p 1022 grant@server1.vmguests.com -i ~/.ssh/server1.key
+	-i = identity file
 
  - Connection with per-user config
 	ssh server1
+
+==========
+
+Explore PKI concepts
+--------------------
+
+Cryptography
+ - Encode data for privacy
+ - Encryption: turns plaintext into ciphertext via cryptographic algorithms
+ - Decryption: turns ciphertext into plaintext
+ - When the same key will lock and unlock the data, it's called a private key, or symmetric encryption.
+	- This is great for securing data, but not good for transferring to another user, as you'd have to transfer
+	 the key with it.
+ - Private/public key pair (asymmetric)
+	- A public key to encrypt data, and a private key to decrypt it
+
+Encryption/Decryption
+ - Hash - one-way mathimatical algorithms that turn plaintext into fixed length ciphertext
+	- Because the algorithm only works one way, you can't unhash the text.
+	- The resulting hashed ciphertext is called the message digest, hash value fingerprint, or signature.
+	- Hashes can be used to compare data for tampering. If you hash the same data twice using the same
+	 algorithm, you will get the same results, allowing you to check to see if the original has been altered.
+	- The simplest hashed ciphertext is created with a non-salted hash. The ciphertext is created using only
+	 the plaintext and the algorithm.
+ - To strengthen the hash, a salt could be used, which is random data added to the input file before it's encoded.
+ - Salted hash - message plus random data
+ - The passwd file in Linux uses a salt
+
+ - When you connect to a website, the web server will send you its public key.
+ - Your browser will encrypt it's session key with it, and send it back.
+ - Because the web server has access to the matching private key, it's able to decrypt a session key and notify the browser which then sets up an encrypted tunnel.
+ - This system works well when all you care about is encryption. It doesn't validate that the web server is the legitimate owner of that domain, and not redirected traffic from a hacker.
+ - The solution is signed certificated.
+ - A certificate authority issues digital certificates that certifies that the ownership of a public key is the named subject of that certificate.
+ - When you access secure websites, you are using signed certificates.
+
+Public Key Infrastructure (PKI)
+ - PKI is a system used to protect key integrity.
+ - It is made up of a certificate authority, or CA, which verifies the user's identity and then issues a digital certificate.
+ - The digital certificate is signed by the CA to provide validation.
+ - The digital certificate provides identication proof, along with an embedded key which now belongs to the requester and can be used to encrypt data and sign it.
+ - For development purposes, a user can create a certificate authority and create their own self-signed certificates. These should not be created for public use.
+
+ - PKI can also be used to create digital signatures. Digital signatures work by providing that a digital message has not been modified from the time it was signed.
+ - They do this by generating a hash of the message, encrypting it with a sender's private key, and then including it with the mssage.
+ - The hash is unique to the mssage. The message is then digitally signed and sent to the recipient.
+ - The recipient generates their own hash of the message and decrypts the sender's hash with the sender's public key. The recipient compares the hash they generated against the sender's decrypted hash. If they match, the message has not been tampered with, and the sender is authenticated.
+
+==========
+
+Configure key-based authentication for SSH
+------------------------------------------
+
+ - The first step to passwordless logins is to generate the SSH key pair using the ssh-keygen command on rhhost1.
+
+ssh-keygen
+	take the defaults when prompted
+	since we didn't pass any options, it created RSA private and public keys
+ls -l ~/.ssh
+	we will find 'id_rsa' which is our private key,
+	and 'id_rsa.pub' which is our public key
+
+ - Now you need to copy the public key to your rhhost2 machine using it's hostname
+
+ssh-copy-id rhhost2
+	copy the public key across
+ssh-add
+	make sure that the key is added to the local SSH agent that managed the keys
+	this isn't always necessary, but doesn't hurt if you run it
+
+ - First, a local public key is copied across the network to the remote end and stored in the user's authorized_keys file.
+ - Second, the fingerprint of the remote server is stored in the local known_hosts file.
+
+cat ~/.ssh/known_hosts
+	this file stores the IP address of the remote servers as well as their matching fingerprints.
+	if the remote server ever changes its IP address, you will need to delete its line from this file
+	 before connecting again.
+
+ - On rhhost1:
+	cat ~/.ssh/id_rsa.pub
+
+ - On rhhost2
+	cat ~/.ssh/authorized_keys
+
+ - We can see that these files are exactly the same.
+ - We can manually append any SSH public key to the authorized_keys file using a redirect, but it's best to let the ssh-copy-id command do it for you as SSH can be very picky about file permissions and syntax.
+
+==========
+
+Tunnel data with SSH
+--------------------
+
+ - A lot of protocols on Linux are not encrypted:
+	- X11 and VNC for remote graphical desktops
+	- rsync for remote file copies
+	- some configuration management systems
+ - All of these can utilize SSH for tunneling
+
+ - Normally when you use SSH to connect to another system you get a shell prompt.
+ - You can also execute command on the remote host without logging into an interactive session by providing them as arguments on the command line
+	ssh user1@dbhost1 "runbackup.sh"
+ - You can also send data through the SSH tunnel by piping it to the SSH command and running a program on the remote end to read from standard-in and act on the data in some manner
+	cat /etc/hosts | shh user1@dbhost1 "cat - > /ome/user1/hosts"
+
+SSH Tunneling Support (natively)
+ - Local port forwarding
+ - Remote port forwarding
+ - Dynamic port forwarding
+
+ - When port forwarding is used, SSH creates a separate tunnel inside of an existing SSH connection.
+ - Network traffic is then forwarded from one port to another on a different host.
+
+Local Port Forwarding
+ - In this example, SSH would create an encrypted tunnel to dbhost1 and login as user1.
+ - SSH will then listen on a local port, in this case 1080.
+ - When a connection is made to this local port, the data is forwarded across the tunnel to the remote network, either to the connected host itself using the localhost address or another host on the remote network and to the specified port.
+
+ssh -L 1080:127.0.0.1:80 user1@dbhost1
+ssh -L 1080:192.168.2.100:80 user1@dbhost1
+
+ - This will take all of the local traffic to the local client's port 1080 and forward it through the tunnel to port 80 on the remote host where it would presumably connect to a web server.
+
