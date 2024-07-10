@@ -202,4 +202,160 @@ badword		List of words that cannot be in a password
  - Disable credit
 dcredit = 0
 
- - Specify
+ - Specify credit
+dcredit = 1
+
+ - Minimum characters required
+dcredit = -3
+
+Password Credit System
+
+Credit		Description
+dcredit=	Credit for digits
+ucredit=	Credit for uppercase letters
+lcredit=	Credit for lowercase letters
+ocredit=	Credit for punctuation (other characters)
+
+ - If you make changes to the system password policy in the pwquality.conf file, you may want to force users to change their password on the next login.
+
+==========
+
+Edit global user account details
+--------------------------------
+
+ - When we create a user without specifying account settings, the useradd command assumes a lot of things.
+ - We can find these settings in the /etc/login.defs file
+
+less /etc/login.defs
+
+ - If we change anything in this file, it will only affect newly created users, not existing users.
+ - In this file we can find the 'Password aging controls', defaults given to a user also seen in the /etc/shadow file.
+ - PASS_MAX_DAYS, PASS_MIN_DAYS, PASS_MIN_LEN, and PASS_WARN_AGE
+ - The minimum password length in /etc/security/pwquality.conf file overrides this, so it's not wortth changing it here.
+ - Minimum user ID and group ID in older RHEL based systems started at 500.  Current systems start at 1000.
+ - CREATE_HOME
+	- On RHEL based systems it's customary to create a home directory for the user when the user is created.
+	- This can be overridden with the `useradd -M` command
+
+==========
+
+Lock user accounts and change password aging
+--------------------------------------------
+
+ - For this exercise we'll create a username, brian, give him a password, and then lock the password.
+
+sudo useradd brian
+sudo passwd brian
+sudo cat /etc/shadow
+	verify brian has an encoded password
+sudo passwd -l brian
+	lock brian's password
+sudo cat /etc/shadow
+	verify again, the second field now starts with !! because it's locked
+
+ - `password -l` only locks the password, and as such, a user could still login with SSH keys.
+ - To fully lock the account, we'll use the chage command.
+
+sudo chage -E 0 brian
+	lock brian's account
+sudo chage -l brian
+	notice that brian's account expired Jan 1 of 1970
+
+sudo chage -E -1 brian
+	unlock account
+sudo chage -l brian
+	now we can see brian's account never expires
+
+ - To see the status of the user's password, we can use the `passwd -S` command.
+
+sudo passwd -S brian
+	(Password locked.)
+sudo passwd -u brian
+	unlock brian
+sudo passwd -S brian
+	verify again
+	(Password set, SHA512 crypt.)
+
+ - Another option to keep users from logging in interactively is to change their shell.
+
+cat /etc/passwd
+
+ - Notice that all non-login accounts have their shell set to /sbin/nologin
+ - This allows those accounts to function, i.e run applications and own files, but a user could not login to any of them.
+
+sudo usermod -s /sbin/nologin brian
+	Change brian's shell
+cat /etc/passwd
+	verify his default shell
+
+ - To reverse the process,  just change it back to /bin/bash
+
+==========
+
+Force password resets
+---------------------
+
+sudo cat /etc/shadow
+	remmeber or screenshot hash for user1
+
+sudo passwd --expire user1
+
+ - Logout and log back in as user1
+ - Type in old password and you will get a reset message.  Type in old pass again before you set the new one.
+
+sudo cat /etc/shadow
+	password hash is different
+
+ - You can also use the chage command to change password aging.
+
+sudo chage -d 0 user1
+	Change password aging
+
+ - The chage command is very useful and powerful, and it's good to be comfortable with, but in this case the passwd command is probably easier to use.
+
+==========
+
+Configure Secure Shell
+----------------------
+
+Secure Shell (SSH) can provide us with:
+ - Interactive login shell
+ - Remote command execution
+ - Secure network file copy
+ - Network tunneling for traffic
+
+ - A working Secure Shell System comproses of an SSH client on the local host and an SSH server on a remote host connected with an encrypted tunnel.
+
+ - Linux, macOS, and Unix all come with SSH servers built in.
+ - Third party SSH servers are available for Windows as well.
+ - On Linux, the main SSH configuration files are stored in /etc/ssh
+
+SSH Client
+ - /etc/ssh/ssh_configt
+
+SSH Server
+ - /etc/ssh/sshd_config
+	Main one
+ - /etc/etc/sysconfig/sshd
+	Minor one
+
+ - You'll probably only need to edit the main one
+
+Per-user client config
+ - ~/.ssh/config
+
+ - The ssh directory doesn't exist until you try to connect to a server for the first time.
+ - A per-user client config file allows us to store information about our remote servers to make administration easier.
+ - For instance, if a remote server used port 1022 and we had a private/public key pair created for it, we would have a configuration file that looked like this:
+
+Host server1
+	User grant
+	HostName server1.vmguesrs.com
+	IdentityFile ~/.ssh/server1.key
+	Port 1022
+
+ - Without the config file, we'd have to type more to login remotely.
+	ssh -p 1022 grant@server1.vmguests.com -i ~/.ssh/server1.key
+
+ - Connection with per-user config
+	ssh server1
