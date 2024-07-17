@@ -4,7 +4,7 @@
 About pluggable authentication modules
 --------------------------------------
 
- - Most services in Linjux use the same authentication system called PAM.
+ - Most services in Linux use the same authentication system called PAM.
  - Pluggable Authentication Modules
  - Modular system, one authnetication method can be swapped out for another
  - Configurable and expandable
@@ -296,7 +296,7 @@ Force password resets
 ---------------------
 
 sudo cat /etc/shadow
-	remmeber or screenshot hash for user1
+	remember or screenshot hash for user1
 
 sudo passwd --expire user1
 
@@ -482,3 +482,131 @@ ssh -L 1080:192.168.2.100:80 user1@dbhost1
 
  - This will take all of the local traffic to the local client's port 1080 and forward it through the tunnel to port 80 on the remote host where it would presumably connect to a web server.
 
+Remote Port Forwarding
+ - Operates in the reverse direction
+
+ssh -R 80:127.0.0.1:3000 user1@dbhost1
+ssh -R 80:172.16.25.50:3000 user1@dbhost1
+
+ - This will connect to a remote host and create a tunnel, then grabs traffic from a port on the remote host and brings it back through the tunnel to a local address, which may be the host the connection was initiated on, or another computer on the local network, and it makes it accessible on a local port.
+ - This is handy if your local computer is behind a NAT and cannot accept incoming connections from the outside netowkr.
+ - Because allowing traffic from a third host to be routed through a public host into a private network may be a security risk, it's turned off by default.
+ - If you need this functionality, you need to turn on gateway ports in the remote public host SSH server configuration file.
+	/etc/ssh/sh
+	Gateway Ports yes
+	Gateway Ports clientspecified
+		- clientspecified allows you to determine which remote clients can tunnel back through the public 
+		 host into your local machine.
+	ssh -R friendlyhost.com:10000:127.0.0.1:22 user1@dbhost1
+		- If you connected to the public host dbhost1 using this line, only friendlyhost.com would be 
+		 allowed to connect to port 10000 and tunnel back through the NAT to your host.
+
+ - Both local and remote port forwarding are somewhat manual processes requiring you to define ports and addresses.
+ - If you want SSH to act more like a proxy server anf forward traffic to an arbitrary destination, you can use dynamic port forwarding.
+ - Dynamic Port Forwarding is provided by SOX5 proxy functionality in SSH.
+ - This is used if a local host is not able to access the internet but it can SSH to another host, which has access.
+
+Dynamic Port Forwarding
+
+ssh -D 6000 user1@dbhost1
+
+ - The SSH Dynamic Port Forwarding will grab local traffic and send it across the tunnel to the accessible host where the traffic will then go on to it's final destination on the internet.
+ - The application protocol in the client is used to determine which port to connect to on the remote machine.
+
+SSH Port Forwarding
+
+Syntax				Header
+ssh -L lport:host:rport		Local port forwarding
+ssh -R rport:host:lport		Remote port forwarding
+ssh -D 127.0.0.1:6000		Dynamic port forwarding
+
+==========
+
+Summarize security best practices
+---------------------------------
+
+Bootloader Security
+ - UEFI/BIOS password
+	Isn't hard to get around if someone has physical access to the machine.
+ - Bootloader password
+	Adds an additional layer of security, but isn't impossible to get around if someone has physical access.
+
+Authentication Methods
+ - Multifactor authentication
+ - One Time Passwords (OTP)
+	After a password is used it's no longer valid
+ - Biometrics
+ - Third party directory services and authentication services
+	- RADIUS server
+	- LDAP
+	- Kerberos
+
+Restrict Root Logins
+ - Don't login as root
+	Login as a normal user and use sudo when needed to elevate privileges
+ - Using PAM we can restrict the ability to use SU to certain people
+ - Restrict root logins via SSH in the sshd.conf
+	All or nothing..
+	You may have a maintenance program that needs access to the root file system on another host
+ - Restrict root logins via SSH using pam_access
+	Can limit by network or host, more power than sshd.conf
+ - Use PKI for passwordless logins
+	Public and private key pairs
+
+Separation of Data
+ - Chroot jail services
+	Services that are susceptible to attacks such as BIND should be run in a chroot jail
+	This provides some level of isolation
+ - Isolate services in containers or even VMs
+ - Separate OS data from application data
+	On different mounted volumes can give us some extra security
+	We can mount volumes as read-only, no SUID or SGID, or even with no exec, so user's can't execute commands
+	 in them.
+ - Use disk encryption with LUKS
+	Especially in the case of mobile devices.
+ - Restrict use of USB devices
+	As a company, especially
+
+Access Control
+ - Use SELinux to contain services
+	So even if a hacker compromises a service, they won't be able to do anything with it.
+ - Find and limit SUID and SGID binaries
+	You can also mount your filesystems with a no-SUID and no-SGID file system options, so SUID and SGID binaries can not execute with elevated privileges.
+ - Use file ACLs to increase file permissions
+ - Secure TTYs
+	Restrict root logins on local TTYs.
+
+Manage installed and running services
+ - Uninstall any softeare that isn't necessary
+ - Disable any running services that are not necessary
+ - Be diligent on OS security updates
+ - Disable insecure services such as FTP, Telnet, and Finger
+ - Always run a firewall
+ - Use dynamic rules
+ - Use TCP Wrappers for services
+ - Use PAM for granular network access
+	ie. which host can access a service at which time
+ - Change default service ports
+	Especially SSH port if you allow external access
+ - Restrict remote logins to trusted hosts
+ - Use VPN connections
+	Where they make sense
+
+=====
+
+Quiz answers
+
+To allow a remote host to ssh through a tunnel originating from within a private network you'd use remote port forwarding.
+Reverse port forwarding allows you to create a tunnel from inside a private network to a public one. Clients can then connect to the public host and tunneled into the private network.
+
+If minlen in the /etc/pwquality.conf file is set to 10 and all credits have a value of 1 how short can the password be?
+6 characters.
+If minlen is 10 and a credit of 1 is applied for one uppercase letter, one lower case letter, a number and a punctuation character then the shortest password would be 6 characters.
+dcredit, ucredit, lcredit, ocredit
+
+Using PAM what will happen if an authentication module with the required control flag fails?
+All other modules for the service will run but ultimately authentication will still fail.
+
+What is the recommended way to store configuration settings to make connection to remote SSH hosts easier?
+Store the hostname, port number and ssh keys in the *~/.ssh/config* file.
+Correct, having each host including the host address, port number and ssh keys in the *~/.ssh/config* file allows users to log into remote hosts by just using the name without knowing any other details about the host.
