@@ -610,3 +610,142 @@ All other modules for the service will run but ultimately authentication will st
 What is the recommended way to store configuration settings to make connection to remote SSH hosts easier?
 Store the hostname, port number and ssh keys in the *~/.ssh/config* file.
 Correct, having each host including the host address, port number and ssh keys in the *~/.ssh/config* file allows users to log into remote hosts by just using the name without knowing any other details about the host.
+
+==========
+
+14. Linux Firewalls
+===================
+
+Compare and contrast Linux firewalls
+------------------------------------
+
+Linux Firewalls
+ - kernel 2.0 = ipfwadm
+ - kernel 2.2 = ipchains
+ - kernel 2.4 = netfilter/iptables
+
+Netfilter
+ - The API in the kernel that applications use to view and manipulate packets.
+ - Netfilter is extensible, and includes modules for:
+	- stateful packet inspection
+	- connection tracking
+	- network address translation
+ - Netfilter is really the firewall in the Linux kernel.
+ - iptables is a tool to manage rules using netfilter.
+ - iptables and firewalld are both tools that interface with netfilter.
+ - firewalld isn't a new firewall for Linux, it's a new administration tool for netfilter.
+
+Example iptables rule
+
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+ - This command appends a rule to the input chain that manages traffic coming into the host that is also destined for the host.
+ - The protocol is tcp, and the destination port is 80.
+ - The action would be ACCEPT.
+ - This is a simple rule to allow incoming web server traffic.
+
+iptables Packet Filtering
+ - With iptables, filtering is done by adding rules to chains.
+ - Traffic destined for the host is filtered on the INPUT chain.
+ - Traffic exiting host is filtered on the OUTPUT chain.
+ - Traffic entering host but not destined for it is filtered on the FORWARD chain.
+
+iptables Tables
+ - filter
+ - nat
+ - mangle
+
+ - iptables does both stateless packet filtering (port blocking) and stateful packet filtering
+
+iptables Problems
+ - Firewall rules are static.
+ - Changes require a complete firewall restart.
+ - Firewall restarts break stateful firewalling and established connections.
+ - iptables came out in 2001 and can be improved
+
+firewalld New Features
+ - Dynamically managed firewall.
+ - Supports network zones with trust levels.
+ - Applies changes without restarting the entire firewall.
+ - No need to reload firewall kernel modules.
+ - firewalld service monitors the firewall
+	- Provides information via D-Bus
+	- Accepts changes via D-Bus using policykit authentication system
+
+Example iptables rule
+
+iptables -A INPUT -p tcp -s 192.168.1.100 -d 8.8.8.8 --dport 53 -m state -state NEW,ESTABLISHED -j ACCEPT
+
+ - In the past with iptables, we'd create a rule that accepted or dropped a packet based on protocol, source address, destination address, source or destination ports, and state, and then added it to a chain.
+ - Often we created our own chains for networks that we trusted and then directed packets to them.
+
+Custom iptables Chains
+
+iptables -N INTERNAL
+iptables -N EXTERNAL
+iptables -A INPUT -i eth1 -j INTERNAL
+iptables -A INPUT -i eth0 -j EXTERNAL
+
+firewalld vs iptables
+ - firewalld uses zones and services
+ - iptables uses chains and rules
+
+firewalld Zones
+ - dmz
+ - external
+ - home
+ - internal
+ - public
+ - trusted
+ - work
+
+ - Each one of these zones has network interfaces, sources, ports, etc. associated with them.
+
+Creating a new rule in firewalld:
+
+firewall-cmd --zone=public --permanent --add-service=ssh
+
+The iptables equivalent:
+
+iptables -A INPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+
+==========
+
+Use firewalld for packet filtering
+----------------------------------
+
+ - In Enterprise Linux 8, the firewall administration tool is firewalld.
+ - iptables cannot be running at the same time as firewalld, as they're not compatible.
+ - To make sure firewalld is running:
+	sudo systemctl start firewalld
+ - To make it persistent
+	sudo systemctl enable firewalld
+ - The command we use to interact with direwalld is the `firewall-cmd` command
+	sudo firewall-cmd --state
+ - If you're editing the firewall rules remotely, you can use the --timeout= option, which will revert the rules back after the specified timeout.
+	sudo firewall-cmd --timeout=60
+ - To make rules survive a reboot, make them persistent
+	sudo firewall-cmd --permanent
+
+sudo firewall-cmd --permanent --add-service=http
+	- This will allow http traffic in from the outside, to the default zone.
+
+sudo firewall-cmd --permanent --remove-service=http
+	- Remove the service from firewall.
+
+sudo firewall-cmd --permanent --add-port=443/tcp
+	- Add rules by port and protocol
+
+sudo firewall-cmd --permanent --remove-port=443/tcp
+	- Remove rules by port
+
+sudo firewall-cmd --permanent --add-port=5901-5918/tcp
+	- Add rules by port range
+
+ - After modifying your firewall, you'll need to reload your rules or none of it will be active.
+	sudo firewall-cmd --reload
+
+sudo firewall-cmd --get-services
+	- List services that we can use by name
+
+sudo firewall-cmd --list-services
+	- List the services enabled in the current zone.
