@@ -1,0 +1,18 @@
+15. Automation and Scripting
+============================
+
+What makes a shell script a shell script?
+-----------------------------------------
+
+vi ~/script.sh
+	The file extension tells VI to do syntax highlighting
+
+ - We need to make the first line point to the shell interpreter.
+ - We can do this by pointing it directly at the interpreter using an absolute path.
+
+#!/bin/bash
+ - In this case we're specifying an sbolute path to the bash interpreter executable
+ - We can also use a second form:
+
+#!/usr/bin/env bash
+ - In this case, we use the ENV command to search the system path for the bash interpreter and execute it there

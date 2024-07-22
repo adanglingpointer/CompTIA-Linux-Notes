@@ -719,7 +719,7 @@ Use firewalld for packet filtering
 	sudo systemctl start firewalld
  - To make it persistent
 	sudo systemctl enable firewalld
- - The command we use to interact with direwalld is the `firewall-cmd` command
+ - The command we use to interact with firewalld is the `firewall-cmd` command
 	sudo firewall-cmd --state
  - If you're editing the firewall rules remotely, you can use the --timeout= option, which will revert the rules back after the specified timeout.
 	sudo firewall-cmd --timeout=60
@@ -749,3 +749,110 @@ sudo firewall-cmd --get-services
 
 sudo firewall-cmd --list-services
 	- List the services enabled in the current zone.
+
+sudo firewall-cmd --list-pors
+	- List the ports enabled in the current zone.
+
+==========
+
+Use firewalld zones
+-------------------
+
+- firewalld.zones man page
+	man firewalld.zones
+
+ - A zone defines the level of trust for the network connections.
+ - A connection can only be part of one zone.
+ - A zone can be used for many network connections.
+	- For example you can have a zone for your internal traffic, which allows DHCP connections
+	- and another for your external network that does not allow any new incoming traffic
+ - If an incoming packet matches the source address for your zone, then the zone rules are applied.
+
+Built-in Zones
+ - drop - drop with no response
+ - block - drop with icmp-host-prohibited response
+ - external - external network connections with masquerade
+	- if you do not trust the other computers on the network
+ - dmz - computers in the DMZ (demilitarized zone) with limited access to inside hosts
+ - public, work, home, internal - for the areas specified
+	- you mostly trust the other computers on the network
+ - trusted - all network connections are accepted
+
+sudo firewall-cmd --get-default-zone
+	Get your default zone
+
+sudo firewall-cmd --list-all-zones
+	List all zones
+
+ - You can create your own zones as well.
+
+sudo firewall-cmd --permanent --new-zone=coffeeshop
+	Create a new zone
+
+sudo firewall-cmd --permanent --delete-zone=coffeeshop
+	Delete a zone
+
+sudo firewall-cmd --permanent --zone=coffeeshop --add-source=10.10.10.0/24
+	Add a source address to the new zone
+	If the incoming traffic matches this source address, then the rules in the zone will be applied
+
+sudo firewall-cmd --permanent --zone=coffeeshop --add-service=http
+	This will allow incoming http traffic from 10.10.10.0
+
+sudo firewall-cmd --reload
+	Reload rules
+
+ - If you don't want to specify the zone each time you make a change, you can make it default.
+
+sudo firewall-cmd --set-default-zone=coffeeshop
+
+sudo firewall-cmd --get-default-zone
+	Verify
+
+ - Once again, remember to reload your firewall rules or they will not be active.
+	sudo firewall-cmd --reload
+
+sudo firewall-cmd --list-all --zone=coffeeshop
+	To see more information on the zone
+
+==========
+
+Using firewalld for NAT
+-----------------------
+
+ - Network Address Translation (NAT) can be accomplished using either masquerade or forwarding in firewalld.
+ - Masquerading can only be used on IPv4.
+ - Masquerade will forward packets that are not directed to our system onto their destination.
+
+sudo firewall-cmd --permanent --zone=coffeeshop --add-masquerade
+	Now all packets coming into the coffeeshop zone will be masqueraded
+
+sudo firewall-cmd --permanent --query-masquerade
+	Verify that it's been added the parmanent firewalld config
+	"yes"
+
+ - We can also use rich-rules for more granularity
+
+sudo firewall-cmd --permanent --zone=coffeeshop --add-rich-rule='rule family=ipv4 source address=172.16.25.0/24 masquerade'
+	With this, we've specified that packets from the 172.16.25.0 network will be masqueraded
+
+sudo firewall-cmd --permanent --zone=coffeeshop --add-forward-port=port=22:proto=tcp:toport=2222:toaddr=172.16.25.125
+	Forward a port to an inside host
+
+sudo firewall-cmd --permanent --list-all --zone=coffeeshop
+	Verify
+
+ - You can also be more granular about which traffic you're forwarding by specifying a source address within the coffeeshop zone.
+ - We'll do this with a rich-rule.
+
+sudo firewall-cmd --permanent --zone=coffeeshop --add-rich-rule='rule family=ipv4 source address=172.16.25.0/24 forward-port port=22 protocol=tcp to-port=2222 to-addr=172.16.25.125'
+	This will forward incoming TCP traffic on port 22 to 172.16.25.125 on port 2222
+
+ - firewalld rich rule man page
+	man firewalld.richlanguage
+
+=====
+
+Quick answers:
+
+Netfilter is the firewall that resides in the Linux kernel. Iptables, firewalld and ipchains are firewall administration tools.
