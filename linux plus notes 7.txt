@@ -200,3 +200,213 @@ Character set [! ]
 
 Man page on globbing:
 	man 7 glob
+
+==========
+
+Bash variable scope
+-------------------
+
+ - Environmental variables
+	- The entire OS can see
+	- These variables are set in the system when it starts
+	- Changes to this environment can be made by editing the shell startup scripts, such as
+		/etc/profile, /etc/bashrc, bash_profile and .bashrc files in the user's home directory
+	- Be sure to use the export command so the variables are accessible by any subprocesses
+ - Variables in scripts
+	- Seen by any function, command, or statement in the script
+	- Anytime we create a variable, it will be in this category by default
+	- Standard variables
+		VAR=10
+ - Variables in scripts that are exported
+	- Variables that are local to a script and all sub-processes and sub-shells run by the script
+	- We can make a regular variable accessible by all sub-processes by using the export command
+		VAR=10
+		export VAR
+ - Local variables
+	- Used within code blocks and can only be seen within that block
+	- To make a variable local to a code block, we'd use the local command
+		testfunction()
+		{
+			local DATA
+			echo $DATA
+		}
+	- We use local variables inside of functions
+
+==========
+
+Output to STDOUT and STDERR
+---------------------------
+
+ - Sending text to standard out is as simple as using echo or printf.
+ - By default, all text goes to STDOUT
+
+cd ~/bin
+vi scriptoutput.sh
+	#!/bin/bash
+
+	echo "This part of the script worked"
+	echo "Error: this part failed" >&2
+chmod u+x scriptoutput.sh
+scriptoutput.sh
+	This part of the script worked
+	Error: this part failed
+scriptoutput.sh > stdout.txt 2> stderr.txt
+cat stdout.txt
+	This part of the script worked
+cat stderr.txt
+	Error: this part failed
+
+ - By utilizing these redirects, we can have data to to STDOUT or STDERR separately.
+
+==========
+
+Pipe data into a script
+-----------------------
+
+ - A lot of commands such as less or grep can be piped to.
+ - In those cases, we can take the STDOUT of one command and pipe it into the STDIN of those commands.
+ - We can implement this fairly easy using read.
+
+cd ~/bin
+vi readpipe.sh
+	#!/bin/bash
+
+	if [[ -p /dev/stdin ]]; then
+		while IFS= read -r LINE; do
+			echo "Line: $LINE"
+		done
+	fi
+
+ - We need tp check to make sure that /dev/stdin is a pipe.
+ - If it is, then we'll read from STDIN using the while-read loop, and assign it to the variable named LINE until we run out of data.
+ - Inside the loop, we'll display each line using echo.
+
+chmod u+x readpipe.sh
+readpipe.sh
+	- Nothing happens and there's no error messages.
+	- This is good; this is what the if condition was for.
+cat /etc/passwd | ./readpipe.sh
+	Line: systemd-network:x:192:192:systemd Network Management:/:/sbin/nologin
+	Line: dbus:x:81:81:System message bys:/:/sbin/nologin
+
+ - To make reading from a pipe more useful, let's save the data into an array.
+
+vi readpipe.sh
+	#!/bin/bash
+
+	if [[ -p /dev/stdin ]]; then
+		while IFS= read -r LINE; do
+			pipearray+=( "$LINE" )
+		done
+	fi
+
+	echo ${pipearray[@]}
+
+ - This will load each line into an indexed array named pipearray
+
+==========
+
+Conditional flow with if, then if
+---------------------------------
+
+If conditional
+	if <condition>
+	then
+
+ - It can be shortened a bit by placing the then on the same line as the if, separated by a semicolon.
+ - If we want to include an else section, we can
+
+	if <condition> ;then
+		<run code>
+	else
+		<run code>
+
+ - We can also check for more than one condition
+
+	if <condition> ;then
+		<run code>
+	elseif <condition> ;then
+		<run code>
+	else
+		<run code>
+
+Return code as a condition
+
+	if grep root /etc/passwd ;then
+		<run code>
+	else
+		<run code>
+
+ - In this example, we search /etc/passwd for the word root using grep.
+ - If it's found, then grep will return a 0 to the if conditional, and the first code block will run.
+ - If grep doesn't find root, then it will return a non-zero number, and the second code block will execute.
+
+Negated return code as a condition
+
+	if ! grep root /etc/passwd ;then
+		<run code>
+	else
+		<run code>
+
+Old- and new-style tests
+
+	if [ "$VAR" = 5 ] ;then
+		<run code>
+	fi
+
+	if [[ "$VAR" = 5 ]] ;then
+		<run code>
+	fi
+
+Conditional Tests Using []
+ - POSIX compliant
+ - Works with older shells, including Bourne
+ - Are commands that then test the condition
+ - Filename expansion and word splitting happen
+ - Parameter expansion happens
+ - &&, || <, and > operators get interpreted by the shell
+ - Quoting required to preserve variable values
+
+Conditional Tests Using [[ ]]
+ - Specific to Bash and ksh
+ - Does not work on older shells
+ - No filename expansion between brackets
+ - No word splitting between brackets
+ - Parameter expansion between brackets
+ - Command substitution between brackets
+ - Supports &&, ||, <, and > operators
+ - Automatic arithmetic evaluation of octal/hexadecimal
+ - Supports extended regular expression matches
+ - Quoting not required
+
+ - It's recommended almost in every case to use double square brackets [[]]
+ - Double brackets are more reliable and consistent and are the future in most cases
+
+==========
+
+Conditional flow with case
+--------------------------
+
+ - Generally we use IF conditionals in Bash.
+ - However, in cases where we're matching more than one pattern with an if-then else-if conditional block, it may be more efficient to use a case statement.
+
+	case $AGE in
+		[1-9]) echo "You are quote young" ;;
+		[5-9]) echo "Time for elementary school" ;;
+		1[0-9]) echo "Time for middle school" ;;
+		[2-9][0-9]) echo "You are an adult" ;;
+		*) echo "That doesn't seem to be an age"
+	esac
+
+ - ;; is called the action list terminator
+ - The characters to the left of the parentheses make up a glob
+	- You can do pattern matching in the same manner as you would on the command line using wild cards, 
+	 character sets, and character classes.
+	- However, you cannot use regular expressions
+ - * is the wildcard catchall
+
+ - In Bash 4 there are two new action list terminators
+	;;&
+		- Instead of exiting after the first match, it continues to process matches
+	;&
+		- Automatically executes the next list without evaluating it's pattern
