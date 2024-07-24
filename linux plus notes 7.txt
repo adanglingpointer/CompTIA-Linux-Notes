@@ -11,8 +11,192 @@ vi ~/script.sh
  - We can do this by pointing it directly at the interpreter using an absolute path.
 
 #!/bin/bash
- - In this case we're specifying an sbolute path to the bash interpreter executable
+ - In this case we're specifying an absolute path to the bash interpreter executable
  - We can also use a second form:
 
 #!/usr/bin/env bash
- - In this case, we use the ENV command to search the system path for the bash interpreter and execute it there
+ - In this case, we use the ENV command to search the system path for the bash interpreter and execute it there.
+ - The advantage is that it could be in a different location and it will still work.
+
+echo "This is a shell script"
+
+ - Save the script, then change the permissions to make it executable.
+
+chmod u+x script.sh
+ - This step allows us to execute our script as if it were a command.
+
+ - The last thing we would do to make it seamless is to put our command in the system path.
+ - When a user logs in, a directory is added to the system path specifically for that user:
+	~/bin
+ - We need to create this directory first.
+
+mkdir ~/bin
+
+mv script.sh ~/bin
+
+ - Now we can execute any script in this directory by calling its name without a path.
+
+script.sh
+	"This is a shell script"
+
+ - You can name your scripts without the .sh extension to make them seem more like system commands.
+ - Or create symbolic links to them without the extension.
+ - None of these steps are actually required to run a text file as a shell script.
+
+echo 'echo this is a shell script' > ~/bin/script2.sh
+bash ~/bin/script2.sh
+ - It runs even without execute permissions or a line indicating the desired interpreter.
+
+==========
+
+Positional arguments
+--------------------
+
+cd ~/bin
+ls *
+ - ls expands the asterisk to show all files
+
+ls debugger.sh script.sh
+ - We've passed two arguments
+
+vi posargs.sh
+
+//code example
+
+#!/bin/bash
+
+echo '$0 is' "$0"
+echo '$1 is' "$1"
+echo '$2 is' "$2"
+echo '$@ is' "$@"
+echo '$* is' "$*"
+
+ - We use the single quotes so the first variables on the line will not be processed and the literal names will be printed on the screen.
+ - The second variable on the line is double quoted which preserves space, but allows variables to be expanded.
+
+chmod u+x posargs.sh
+posargs.sh
+	$0 is /home/user1/bin/posargs.sh
+	$1 is
+	$2 is
+	$@ is
+	$* is
+posargs.sh dog cat horse
+	$0 is /home/user1/bin/posargs.sh
+	$1 is dog
+	$2 is cat
+	$@ is dog cat horse
+	$* is dog cat horse
+
+ - $0 is the path to the script
+ - $1 is the first argument
+ - $2 is the second argument
+ - $@ is all arguments
+	- contains word split items, each one essentially quotes
+	- if we were to loop through $@ it would iterate three times as each items is a separate thing
+ - $* is all arguments
+	- contains one thing, all arguments as one entity
+	- if we were to loop through all items in $* it would iterate once as it appears as one item
+
+==========
+
+File globbing
+-------------
+
+Pattern matching is bash
+ - globs
+ - extended globs
+ - brace expansion
+ - basic regular expressions
+ - extended regular expressions
+
+What are globs?
+ - Originally in Bell Labs Unix, there was a command called glob that expanded wildcard characters into a list of unrooted arguments.
+ - /etc/glob
+ - Globbing is now a function built into the shell.
+ - Globbing support depends on shell type/version
+	- Bash shell options may affect how globs work as well
+ - Globs are a set of bash features that match or expand certain types of patterns
+ - Globs can look and act like regular expressions, but are less expressive and are easier to use.
+ - They're also easier for the system to process as well.
+ - Don't confuse globs and regular expressions.
+ - Globs match file names, whereas regular expressions match text.
+ - Sometimes this functionality can look blurred depending on how you're using it.
+
+Using a glob with ls
+	ls [0-9]?file*.txt
+		- This would get all files starting with the number 0 through 9, followed by one character of any
+		 type, and then the world 'file', followed by any number of characters of any type, and finally
+		 ending with txt.
+		ls 1_file-rev1.txt 2_file-rev1.txt 3_file-rev1.txt
+ - This process is being handled by the shell, and the LS command is unaware of it.
+
+Globs and regular expressions
+	grep '^A.*\.txt' file1.txt file2.txt
+
+Bash globbing options
+ - nocaseglob
+ - nocasematch
+ - nullglob
+ - globstar
+ - extglob
+
+Globs vs Regular Expressions
+ - Glob:
+	[0-9]?file*.txt
+ - Regular expressions:
+	[0-9].file.*.txt
+
+ - To use a regular expression to do the same job, we need to use a command that has regular expression support built-in, such as grep.
+ - LS does not support regular expressions.
+
+Using a regex with ls
+	ls [0-9]?file*.txt
+	ls | grep '[0-9].file.*\.txt'
+
+ - We'd still list the files in the directory with the LS command, and then pipe the resulting text to grep, which would then use a regular expression to match the text.
+
+==========
+
+Wildcards
+---------
+
+ - One of the reasons that manipulating files on the command line can be faster and more efficient than the GUI is file globbing.
+ - File globbing uses patterns containing wildcard to match files based on their names.
+ - File globbing - The process of expanding a nonspecifric file name containing wildcard characters in specific file names.
+ - For instance, if you wanted to list all file names starting with the word 'file' followed by an extension uou could use:
+	ls file*
+ - This glob can be used with any command as the globbing is handled by the shell itself.
+
+Asterisk (*)
+ - Matches zero or more of any type of character.
+ - It matches everything and nothing.
+	`ls file*` would match 'file.txt' as well as 'file'
+
+Question mark (?)
+ - Matches one of any character
+	file?.txt will match file1.txt and filea.txt
+	file??.txt will match file00.txt and fileab.txt
+
+Character set []
+ - Matches one character in list
+	file[123].txt will match file1.txt, file2.txt, and file3.txt
+ - You can also match a range of character
+	file[1-3].txt will match file1.txt, file2.txt, and file3.txt
+	file[a-z].txt will match filea.txt, fileb.txt, filec.txt, ...
+	file[A-Z].txt will match fileA.txt, fileB.txt, fileC.txt, ...
+	It is not advised to mix uppercase and lowercase, ie. file[a-Z].txt, as the results may vary,
+	 instead use `file[a-zA-Z].txt
+	file[a-zA-Z].txt will match filea.txt, fileB.txt, ...
+ - You can also combine ranges with lists
+	file[0-9abc].txt will match file0.txt, filea.txt, ...
+ - If you want to match the hyphen itself then you need to include the hyphen at the beginning or end of the list of characters in the set
+	file[-0-9].txt will match file-,txt, file1.txt, file2.txt, ...
+
+Character set [! ]
+ - [! ] negates the match
+ - [^ ] negates the match
+	file[!0-9].txt will match filea.txt, fileb.txt, ...
+
+Man page on globbing:
+	man 7 glob
