@@ -410,3 +410,168 @@ Conditional flow with case
 		- Instead of exiting after the first match, it continues to process matches
 	;&
 		- Automatically executes the next list without evaluating it's pattern
+
+==========
+
+Numeric Comparison Operators
+----------------------------
+
+ - Bash has several ways of checking for numeric equivalence.
+ - The POSIX compatible way is to use
+	-lt = less than
+	-gt = greater than
+	-eq = equal
+	-le = less than or equal
+	-ge = greater than or equal
+ - There are also greater than, less than, and equal symbols. But be careful, as they're string comparison operators, not numeric comparison operators.
+
+	if [[ 1 -lt 5 ]]
+	if [[ 1 -gt 5 ]]
+	if [[ 1 -eq 5 ]]
+	if [[ 1 -le 5 ]]
+	if [[ 1 -ge 5 ]]
+
+Not numeric comparison operators:
+
+	if [[ 1 > 5 ]]
+	if [[ 1 < 5 ]]
+	if [[ 1 = 5 ]]
+
+ - There are several older forms of doing integer math in Bash
+	- Legacy Bash integer math
+		let a="17 + 23"
+		a=$(expr 17 + 23)
+		a=$[17 + 23]
+- These have all been replaced by two forms, double parentheses, and dollar sign double parentheses, depending on if you want to output to STDOUT or not.
+	- New Bash integer math
+		let a="17 + 23"
+		a=$(expr 17 + 23)
+		a=$[17 + 23]
+
+		((a=17+23))
+		a=$((17+23))
+
+cd ~/bin
+vi numericcondition.sh
+	#!/bin/bash
+
+	if (($1 > $2)) ;then
+		echo "The first argument is larger than the second"
+	else
+		echo "The second argument is larger than the first"
+	fi
+chmod u+x numerriccondition.sh
+numerriccondition.sh 1 5
+	'The second argument is larger than the first'
+numerriccondition.sh 5 1
+	'The first argument is larger than the second'
+vi numericcondition.sh
+	#!/bin/bash
+
+	if (($1 > $2)) ;then
+		echo "The first argument is larger than the second"
+	else
+		echo "The second argument is larger than the first"
+	fi
+
+	sum=$(($1+$2))
+	if [[ "$sum" -ge 10 ]];then
+		echo "The sum of the first two arguments is greater than or equal to 10"
+	else
+		echo "The sum of the first two arguments is less than 10"
+	fi
+numerriccondition.sh 8 9
+	'The second argument is larger than the first'
+	'The sum of the first two arguments is greater than or equal to 10'
+
+ - We can use mathematical expressions directly in if-conditionals.
+ - Or we can do expressions separately, store the value, and then put the result in an if-conditional.
+
+==========
+
+String conditions
+-----------------
+
+ - One of the most common tests in a bash if-conditional is a string comparison.
+	if [[ dog = cat ]]
+ - Comparing numbers as strings
+	if [[ 4 = 4 ]]
+ - Comparing numbers as integers
+	if [[ 4 -eq 4 ]]
+ - Zero length?
+	if [[ -z $VAR ]]
+ - Not zero length?
+	if [[ -n $VAR ]]
+ - Equality
+	if [[ dog = cat ]]
+ - Inequality
+	if [[ dog != cat ]]
+ - Sort order
+	if [[ dog < cat ]]
+	if [[ dog > cat ]]
+		- Be aware that it uses the ASCII codes and not current locale settings
+
+==========
+
+File conditions
+---------------
+
+-e = If the file exists
+	- In Linux everything is a file, including devices. This check doesn't discern
+-f = If the file exists and is a file
+-d = If the file exists and is a directory
+-c = If the file exists and is a character device
+-b = If the file exists and is a block device
+-p = If the file exists and is a pipe
+-S = If the file exists and is a socket
+-L = If the file exists and is a symbolic link
+-g = If the file exists and has the SGID bit set
+-u = If the file exists and has the SUID bit set
+-r = If the file exists and is readable by the current user
+-w = If the file exists and is writable by the current user
+-x = If the file exists and is executable by the current user
+-s = If the file exists and has a size larger than zero bytes
+-nt = If the file is newer than another
+-ot = If the file is older than another
+-ef = If two files are the same device and have the same inodes
+
+==========
+
+For loop
+--------
+
+	for item in <list> ; do
+		<work on $item>
+	done
+
+ - Static list
+	for item in 1 2 3 4 5 ;do
+		echo "$item"
+	done
+
+ - Dynamic list using seq, old method
+	for item in $(seq 1 10) ;do
+		echo "$item"
+	done
+
+ - Dynamic list using parameter expansion
+	for item in {1..10} ;do
+		echo "$item"
+	done
+ - This way we're not spawning a new shell, and executing commands is more reliable and faster.
+
+ - There are times through when we will use command substitution to create a list
+ - Dynamic list using command substitution
+	for file in $(find /etc) ;do
+		echo "$file"
+	done
+ - However, be careful because the for loop uses the Internal Field Separator (IFS) to word split.
+ - The IFS by default splits on blank spaces, so if a file name has a space in it, your loop will break.
+ - You can change the IFS temporarily while you're looping
+ - Modified IFS
+	OLDIFS="$IFS"
+	IFS=$'\n'
+	for file in $(find /etc) ;do
+		echo "$file"
+	done
+	IFS="$OLDIFS"
