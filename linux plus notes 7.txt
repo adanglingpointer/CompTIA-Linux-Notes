@@ -103,7 +103,7 @@ posargs.sh dog cat horse
 File globbing
 -------------
 
-Pattern matching is bash
+Pattern matching in bash
  - globs
  - extended globs
  - brace expansion
@@ -575,3 +575,139 @@ For loop
 		echo "$file"
 	done
 	IFS="$OLDIFS"
+
+ - Another option is to loop through the values of an array
+	OLDIFS="$IFS"
+	IFS=$'\n'
+	for item in ${array[@]} ;do
+		echo "$item"
+	done
+	IFS="$OLDIFS"
+ - We not putting quotes around the list, because quoting it will result in there only being one item in the list.
+
+ - Loop through array indices
+ - Since the array is indexed, it would be better to loop through the indexes instead
+	array = (one two three)
+
+	for i in $(seq 0 $(( ${#array[@]} - 1)) ) ;do
+		echo "${array[$i]}"
+	done
+ - First we create the array
+	array = (one two three)
+ - Then, we get the number of array items using the #array[@] syntax
+ - Then we subtract 1 since the array count started from 1, and we will be looping starting from 0.
+ - Next, we use a sequence command to create our list from 0 to the number of array items minus one
+	$(seq 0 ... )
+ - Now for each iteration, that index number is assigned to the variable named i, and we use that to access the array items items specifically.
+
+ - Use parameter expansion?
+	array = (one two three)
+
+	for i in {0..5} ;do
+		echo "${array[$i]}"
+	done
+ - We can't use this parameter expansion example. Parameter expansion happens before math and vaariable expansion.
+ - Our only choice is to run a sub shell with a sequence command
+	array = (one two three)
+
+	for i in {0..$(( ${#array[@]) - 1))} ;do
+		echo "${array[$i]}"
+	done
+
+==========
+
+While loop syntax
+-----------------
+
+ - It is possible to have a condition inside a for-loop that will break out of the loop before it runs out of items
+	for item in {1..10000} ;do
+		if [[ $item = 100 ]] ;then
+			break;
+		fi
+	done
+ - A better idea is to use a loop with a condition built in, a while-loop and until-loop
+ - While loop syntax
+	while [ condition ] ;do
+		<Do stuff>
+	done
+
+ - A while loop while iterate while a condition is true, and the until loop will iterate until the conidition is true.
+
+ - The condition can match on wildcards but not regular expressions.
+
+ - The simplest while loop we can make is the infinite loop by replacing the condition with eowrd true.
+ - This loop will keep iterating forever, unless the user kills the script or the conditions of the it-condition dobuel square bracekst is true and the break command runs.
+	while true ;do
+		if [[ <condition> ]] ;then
+			break;
+		fi
+	done
+
+ - By nesting on if-conditionals inside of a while-true loop, we can take advantage of the if-conditionals double square brackets and regular expressions.
+
+ - While loop with condition
+	i='0'
+	while [ $i -lt 4 ] ;do
+		echo "$i is still less than 4"
+		((i++))
+	done
+ - The loop continues as long as the value of i is less than 4.
+ - Each time the loop iterates, the value of i is increased.
+ - Once it reached 4, the loop exits.
+
+ - One major advantage of using a while-read loop over a for-loop is that is handles different types of text better.
+ - Any text value provided on the command line will be read by the while-read loop and it will handle blank spaces fine.
+
+==========
+
+Quiz answer
+
+Which is the preferred way of doing integer math in Bash?
+((a=17+23))
+The double parenthesis method is the preferred way of doing integer math. This method also returns codes so can be used in an if conditional. Values can be returned to STDOUT by using the `$(())` syntax such as `a=$((17+23))`.
+
+==========
+
+16. Automating Jobs
+===================
+
+Manage one-time jobs with at
+----------------------------
+
+ - There are two different types of scheduled jobs: one-time jobs and recurring jobs.
+ - For one-time jobs, we can use a service called at.
+ - The at service runs jobs at a certain time, or in the case of a batch job, when the CPU load avergae drops below 0.8.
+ - at syntax
+	at <time format>
+ - at supports a wide variety of time formats
+	4:25am
+	16:45
+	midnight
+	noon
+	tomorrow
+	4pm + 2 days
+	now + 3 hours
+	teatime (4pm)
+	3:00 5/15/15
+	3:00 5-15-15
+	10am Jul 31
+
+sudo yum install -y at
+sudo systemctl start atd
+sudo systemctl enable atd
+at now +5min
+	This will bring up a prompt where we can type linux commands to run
+	at> mkdir ~/Documents.bak
+	at> rsync -a ~/Documents/ ~/Documents.bak
+		It's necessary to put the trailing slash after /Documments for rsynax to copy the files inside of
+		 documents to the back of directory
+	When done, press ctrl+d
+atq
+	Verify at job
+
+4	Fri Sep 25 92:29:00 2020	a		user1
+Job #	Time and date			Queue letter	Username
+
+at -c 4
+	View the at file (job number 4 in this example)
+	This shows the contents of the at job, including the Shell environment
