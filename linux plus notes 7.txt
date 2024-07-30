@@ -711,3 +711,155 @@ Job #	Time and date			Queue letter	Username
 at -c 4
 	View the at file (job number 4 in this example)
 	This shows the contents of the at job, including the Shell environment
+atrm 4
+	Remove/cancel at job
+
+ - The at service also allows us to create batch jobs.
+ - The difference between an at job and a batch job is that the at job rubs at a specified time; Batch jobs run when the system load average drops below 0.8, ensuring they only get run when the system isn't busy.
+
+batch
+	insert the commands you wish
+	at> touch ~/batchfile.txt
+	press ctrl+d to save it
+atq
+	list at and batch jobs
+	if it doesn't show anything, the job must have ran
+ls -l ~/batchfile.txt
+	the existence of this file shows our batch job did run
+
+==========
+
+Manage reoccuring user jobs with cron
+-------------------------------------
+
+ - A cron job is stored in a cron table, or cron tab
+ - There are two types of cron jobs
+	- User Cron Jobs
+		- Specific to each user
+		- Managed by users
+		- Stored in /var/spool/cron/<user>
+	- System Cron Jobs
+		- System-wide, ran by the OS, not users
+		- Managed by root
+		- Stored in /etc/cron.d
+
+Crontab example
+	45	23	*		*	6		/home/grant/bin/backup.sh
+	Minute	Hour	Day of month	Month	Day of week	Command to run
+	[0-59]		[1-31]		[1-12]	[0-6]
+
+ - This cron job will run 45 minutes after the hour
+	- If it was an * it would run every minute of the hour
+	- We can have more value for this field, for example:
+		15,30,45
+		15-45
+		*/10 = step value, run every 10th minute
+		1-59/2 = every odd minute
+ - 23 = hour of the day
+	- Only run 11pm
+	- Midnight is hour 0
+	- * means run every hour
+ - Day of the month
+	- * means every day of the month
+ - Month of the year
+	- 1 through 12, or jan to dec
+	- * means every month
+ - Day of the week
+	- 0 is Sunday, we can also abbreviate with 3 letter words, ie. sun
+
+
+sudo yum install -y cronie crontabs
+sudo systemctl start crond
+crontab -e
+	bring up crontab in vi
+		0 1 * * * rsync -a ~/Documents/ ~/Documents.bak
+	this will run our backup command once per day at 1am
+crontab -l
+	show cronjob
+
+ - If you want to get rid of the entire user cron tab file, you can use
+	crontab -r
+
+man crontab
+man 5 crontab
+
+==========
+
+Manage reoccuring system jobs with cron
+---------------------------------------
+
+ - System cron jobs are stored in /etc/cron.d
+ - To create a cron job, we'll need to create a new file inside of this directory
+
+sudo vi /etc/cron.d/backupdocs
+	0 1 * * * root rsync -a /home/user1/Documents/ /home/user1/Documents.bak
+		We specified the user and absolute paths
+
+ - If you have a script that you'd like to run every hour, you could also just copy to /etc/cron.hourly
+ - There are directories for hourly, daily, weekly, and monthly.
+ - In most cases, when you edit the configuration of a service, you need to restart that service. However, in the case of cron it re-parcels the cron tab files every minute and loads them into memory, so there's no reason to restart after each change.
+	ls -d /etc/cron.*
+
+man cron
+man crontab
+man 5 crontab
+
+==========
+
+Configure a system to use Network Time Protocol
+-----------------------------------------------
+
+ - In a GUI go into overview mode by clicking in top left-hand corner, and type 'date and time'.
+ - This interface allows you to change the date, time, and time zone.
+ - Every computer has a real time clock, or RTC, that keeps time when the computer is off.
+ - When the computer is turned on, the OS reads the real time clock and then keeps time from that point on.
+ - If we set up Network Time Protocol, or NTP, our computer will contact a time server on the internet and adjust the time accordingly. This method is the most accurate.
+
+timedatectl
+	In CentOS
+	Show local time, Universal time (Greenwich, UK), RTC time, and time zone
+timedatectl list-timezones
+	list all (>400 timezones)
+	press q to quit
+timedatectl list-timezones | grep America
+	narrow down to ~150
+timedatectl set-timezone America/Vancouver
+	set timezone
+timedatectl
+	verify
+
+timedatectl set-time 23:26:00
+	set time manually
+	hour:minute:second
+timedatectl set-date 2020-09-20
+	yyyy-mm-dd
+timedatectl set-time "2020-09-23 23:26:00"
+	set both at same time
+
+timedatectl set-ntp true
+	use ntp server to update automatically
+
+==========
+
+17. Version Control
+===================
+
+Start with Git
+--------------
+
+sudo dnf install -y git
+
+ - There are a couple of different ways of storing configurations for Git.
+ - System-wide configurations will be stored in /etc/gitconfig.
+ - Usually you will set configuration options for the user.
+	- Git calls this the global config, which may be a bit confusing.
+	- It is global in the sense that it spans all projects created by this one user.
+
+Git user config (global)
+ - $HOME/.gitconfig
+	Inside user's home directory
+
+ - We can also save configurations at the project level
+
+Git project config
+ - /path/to/project/.git/config
