@@ -863,3 +863,179 @@ Git user config (global)
 
 Git project config
  - /path/to/project/.git/config
+
+ - We don't need to know where these files are stored because we can use the git config command to make changes
+
+Set system config
+	git config --system
+
+Set user config
+	git config --global
+ - You have to be logged in as that user
+
+Set project config
+	git config --local
+ - This is the default behavior, so you can actually leave of --local
+	git config
+
+ - The first thing you'll want to do is configure your name and email address.
+ - If you will be pushing commits to GitHub, it should be the same username and email that you use there.
+
+git config --global user.name "Grant McWilliams"
+git config --global user.email "grant@soundlxnuxtrxxning.com"
+
+ - Next, configuring the text editor to use.  Choose the editor that you like the most.
+
+git config --global core.editor "vim"
+
+git config --global color.ui true
+	Turn on colors so we can see Git messages better
+
+git config --list
+	List configuration options, to confirm
+
+ - If you later install Git on another computer and configure it with a different email address and contribute to the same project, it will appear that the commits come from two different people.
+ - It's wise to use the same information on every host you plan to commit with.
+
+mkdir ~/GitProjectOne
+cd GitProjectOne
+git init
+ls -la
+	.git directory is used to track changes
+	deleting this and the directory will no longer be tracked with Git
+cd .git
+ls
+
+==========
+
+Commit and add files
+--------------------
+
+cd ~/GitProjectOne/
+vim ourfirstfile.txt
+	This is our first project file
+git status
+	..."untracked files present"
+git add ourfirstfile.txt
+git status
+	"No commits yet"
+	"Changes to be committed:"
+
+ - Git doesn't store the versions of files, but rather the changes to them.
+ - For every commit, you need to leave a message for the log to describe what the change set does.
+
+git commit -m "initial commit"
+ - Leaving out the m and Git will bring up an editor for multi-line commit message logs
+git status
+	"On branch master"
+	"nothing to commit, working tree clean"
+
+vim ourfirstfile.txt
+	This is our first project file
+	This is a new line
+git status
+	"modified: ourfirstfile.txt"
+
+ - You either need to add the file, or do a `git commit -a` to commit all changes
+
+git commit -a
+	This will bring up an editor
+
+How to write commit messages
+ - Do not store date
+ - Write in present tense
+ - Short line summary
+ - Optional descriptive message
+ - Do not be vague
+
+==========
+
+Why branch?
+-----------
+
+ - Branching allows us to try new ideas, switch between branches quickly, and allow collaboration on new features without disrupting current ones.
+
+Rollback
+ - Creates a new commit
+ - Changes current files to match old files
+
+Branching
+ - Create a test copy of all files
+ - Make changes
+ - Test changes
+ - Merge changes back into production copy, or throw away test copy
+
+==========
+
+Create branches
+---------------
+
+git branch
+	* master
+git branch testconfig
+	Create new branch
+git branch
+	* master
+	testconfig
+git checkout testconfig
+	Switch to testconfig branch
+git branch
+	master
+	* testconfig
+vim ourfirstfile.txt
+ - Add a third line
+git commit -a -m "This adds a third line"
+git log
+ - You can see the commit in the log
+git checkout master
+cat ourfirstfile.txt
+ - The third line is not there
+git log
+ - Commit does not exist in this master branch
+
+==========
+
+Compare, rename, and delete branches
+------------------------------------
+
+git branch
+	List branches
+git diff master..testconfig
+	See which changes testconfig has made to master
+git diff master..testconfig^
+	Compare the previous version of the testconfig branch to current version of master
+git branch --move testconfig development
+	Rename testconfig to development
+git checkout development
+git branch development-user1
+git branch
+	* development
+	development-user1
+	master
+git branch --delete development-user1
+git branch
+
+ - If you have made changes to files in the branch you will be warned if you try to delete it.
+ - You will need to use -D to delete it
+
+==========
+
+Merge branches
+--------------
+
+git branch
+git diff master..development
+git checkout master
+git merge development
+	Merge development into master as a fast-forward merge
+git diff master..development
+	These should be the same now
+git checkout development
+vim ourfirstfile.txt
+	Add a fourth line
+git commit -a -m "This adds a fourth line"
+git diff master.development
+
+ - To force a scenario where you cannot do a fast-forward merge, go back to the master branch and change the file there.
+
+git checkout master
