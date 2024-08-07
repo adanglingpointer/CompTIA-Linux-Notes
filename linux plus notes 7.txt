@@ -1039,3 +1039,128 @@ git diff master.development
  - To force a scenario where you cannot do a fast-forward merge, go back to the master branch and change the file there.
 
 git checkout master
+vim ourfirstfile.txt
+	Add a fourth line
+git commit -a -m "This adds a 4th line"
+
+ - We now have two separate branches going in different directions because they both have changes.
+
+git diff master..development
+	-This is a 4th line
+	+This is a fourth line
+git merge development
+	CONFLICT (content): Merge conflict in ourfirstfile.txt
+git status
+	both modified: ourfirstfile.txt
+vim ourfirstfile.txt
+	This is our first project file
+	This is a new line
+	This is a third line
+
+	<<<<<<< HEAD
+	This is a 4th line
+
+	=======
+	This is a fourth line
+	>>>>>>> development
+ - We can see that git has added characters to this file.
+ - We see some less than symbols sating the following line is in the head.
+ - We also have some greater than symbols saying that the line is in the development branch.
+ - At this point we can manually decide what to do.
+
+ - Delete the line that says "this is the 4th line" as well as the lines added by git.
+
+git add ourfirstfile.txt
+git commit
+ - The editor comes up with a default message saying it's a merge conflict. Go with that and save it.
+	Merge branch 'development'
+ - This means that it merged the two branches.
+git diff master..development
+
+git log --graph --oneline
+ - This shows that we created the branch, that we had two different edits, and they were merged.
+
+==========
+
+Create a GitHub repository
+--------------------------
+
+ - GitHub is a site that provides free and paid Git repository hosting.
+
+ - GitHub provides SSH command option to interact with the repo
+	git remote add origin git@github.com:UserNdshH/GitProjectOne.git
+ - There's also an HTTPS option that provides a token
+
+Setting up SSH key in GitHub
+
+cat ~/.ssh/id_rsa.pub
+ - Copy the entire key to your clipboard.
+
+ - In GitHub click the icon in the top right and go to Settings.
+ - Scroll down to SSH and GPG keys, and then click New SSH Key
+ - Give it a title, paste in key, Add SSH Key
+
+git branch -M main
+git push -u origin main
+ - This will push the files up to GitHub
+git remote -v
+ - This will show that you have two remotes called "origin" for fetching and for pushing.
+ - It is possible that these two would be different and you'd have one repo to pull files down from and you'd have another to push to.
+
+==========
+
+18. Realizing Virtual and Cloud Enviornments
+============================================
+
+Compare cloud and virtualization concepts
+-----------------------------------------
+
+What Is Cloud Computing?
+ - The automatic and synamic scaling of computer resources, especially data storage, and computing power.
+
+Cloud Resources
+ - CPU cycles
+	- Amazon Web Services, Google Compute Cloud, Microsoft Azure
+ - Storage space
+	- Dropbox, OneDrive, Google Drive, pCloud
+	- Thin provisioning: add space as it's almost running out (dynamically)
+ - Database capacity
+	- Amazon Relational Database Service, Google Cloud SQL, Microsoft Azure Database Services
+ - Network infrastructure
+	- Routing, switching, firewalls, VPNs, and IP addressing
+ - Infrastructure as a Service (IaaS)
+	- For example, virtual machines we can install the OS and software
+ - Platform as a Service (PaaS)
+	- Create applications on a platofmr
+	- For example, create an app on Google App Engine without any knowledge of which OS it's running on
+	- We write to the API of the platform, not to the operating system
+ - Software as a Service (SaaS)
+	- For example Gmail
+	- Applications running on the internet
+
+Where's My Cloud?
+ - Private cloud
+ - Public cloud
+ - Hybrid cloud
+
+What Is Virtualization?
+ - The creation of virtual versions of something - specifically computer hardware, storage devices, and network resources.
+
+Machine Virtualization
+ - If you want to virtualize a computer we'd have a hypervisor that creates a software layer to intercept software requests for hardware.
+ 
+
+[ Application ]
+[ Guest Operating System ]
+[ Hypervisor ]
+[ Host Operating System ]
+[ Physical Computer ]
+
+VirtualBox Virtual Machine
+ - Virtual CPUs
+ - Virtual hard drive controllers
+ - Virtual hard drives
+ - Network cards
+ - Virtual ports
+ - Display cards
+ - BIOS
