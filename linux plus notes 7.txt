@@ -1164,3 +1164,54 @@ VirtualBox Virtual Machine
  - Virtual ports
  - Display cards
  - BIOS
+
+==========
+
+Types of hypervisors
+--------------------
+
+Type 2 Hypervisor
+ - Application > VM with Guest OS > Hypervisor > Host Operating System > Physical Computer
+ - The application requests resources such as memory disk or network from the guest OS in the virtual machone.
+ - The VM then requests resources from the hypervisor which in turn ask the host OS, which then access the resources from the physical machine.
+ - Examples: VirtualBox, VMware Workstations
+ - It's an application running on a host OS which in turn provides virtual machines for guest operating systems.
+
+Type 1 Hypervisor
+ - Application > VM with Guest OS > Hypervisor > Physical Computer
+ - The hypervisor's running on bare metal, there's no host OS to go through.
+ - Examples: VMware ESXi, Xen, KVM
+
+ - Type 1 and type 2 hypervisors may support one or more types of virtualization.
+
+Types of Virtualization
+ - Emulation
+	- Not actually virtualization
+	- Every instruction is translated or emulated
+	- Very slow
+	- Allows emulation of one type of hardware (CPU) on another
+	- To make faster:
+		- Jist In Time (JIT) emulation
+		- Caching emulated instructions
+	-5-100 times slower than native performance
+ - Paravirtualization (PV)
+	- Software virtualization
+	- Does not require hardware virtualization support
+	- Very fast
+		- CPU instructions are passed directly from the virtual CPU to the real CPU
+		- The guest OS sees the real CPU instead of an emulated one
+	- Requires paravirtualization support in guest kernel
+		- Requires the guest OS to know it's being virtualized
+	- Does not attempt to virtualize entire computer
+		- ie. no BIOS or video card
+	- Near-native performance on Intel 32-bit x86 CPUs
+		- Due to some architecture changes, the performance suffers on 64-bit CPUs.
+	- Xen hypervisor supports PV mode
+ - Full Virtualization (HVM)
+	- Hardware virtualization
+	- Requires hardware virtualization support
+		- On Intel CPUs this is called VT-x and on AMD CPUs it's called SVM
+	- Speed depends on hardware implementation
+	- Does not require guest OS to be aware
+	- Attempts to virtualize entire computer
+	- Uses emulation to provide
