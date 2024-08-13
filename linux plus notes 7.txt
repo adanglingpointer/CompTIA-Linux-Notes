@@ -1214,4 +1214,160 @@ Types of Virtualization
 	- Speed depends on hardware implementation
 	- Does not require guest OS to be aware
 	- Attempts to virtualize entire computer
-	- Uses emulation to provide
+	- Uses emulation to provide BIOS and other hardware
+	- Supported by VMware, Xen, KVM, and VirtualBox
+
+ - Full with paravirtualized drivers (HVM + PV)
+	- To speed up the slow bits, we can use full virtualization with paravirtualized drivers.
+	- Paravirtualized drivers are faster, as they're virt aware.
+	- Paravirtualized drivers can be installed in Windows.
+	- Emulated portions are still slow.
+	- PV drivers available for most Type 1 hypervisors.
+
+ - Hybrid virtualization (PVH)
+	- Only supported by Xen
+	- Doesn't use any emulation
+	- Uses hardware for as much as possible.
+	- Uses paravirtualization for everything else.
+	- "About as fast as you can get"
+	- Fast on 32bit and 64bit CPUs
+	- Because there's no emulation, very small attack vector
+		No BIOS to exploit or virtual hardware devices that aren't needed.
+	- Amazon AWS uses PVH mode for Linux guest by default.
+
+==========
+
+VM initialization and tools
+---------------------------
+
+Create a VM in VirtualBox
+ - Download ISO image
+ - Create VM
+ - Start VM and select ISO
+ - Install OS
+
+Installation Automation
+ - The simplesy way to install another VM exactly the same as the first is to use
+	- Kickstart on Red Hat
+		Tells the installer what to do
+	- Preseed on Debian
+		Answer questions that the installer wouldn't asked the user
+	- AutoYaST on SUSE
+ - Limited to no interaction during install
+
+ - The Red Hat installer creates a Kickstart file automatically when you install and saves it in 
+	/root/anaconda-ks.cfg
+ - Bypassing this file to the kernel during boot, you can replay the very same installation a second time.
+ - You can also use this Kickstart file as a template and make changes to suit your needs.
+
+Store Kickstart File
+ - USB thumb drive
+ - Hard drive attached to system
+ - Remote network location
+
+ - For instance, if you wanted to install from a Kickstart file on Red Hat, you would edit the kernel boot line and append the location.
+	- Install media kernel argument
+		inst.ks=http://192.168.0.100/kickstart/RHLinux.bin
+
+ - Using the automated installation files cuts down on inconsistencies and allows you to automate many installs.
+ - Another way is to install on eVM as a golden image and then clone it.
+ - To make clones of a VM you'd shut the VM down, make one, two or three clones, and then boot them back up.
+ - When you want to use a second host to run VMs:
+	- you need to shut the VM down
+	- then export the VM disk image in OVA (or another) format
+	- copy it across the network
+	- import it
+	- and then start the VM back up on VM Host 2
+
+ - A better option is to have the VM disk images stores remotely in a storage repository or pool.
+ - The VM and its applications would run on VM Host 1, but it's virtual drive would be accessed from across the network.
+ - When the VM is started, it will automatically be run on the host with the most available resources.
+ - VirtualBox isn't designed like this, but type 1 hypervisors like VMware, iSCSI, KVM, and Xen Server handle it fine.
+ - You can also migrate a running VM from one host to another in a matter of milliseconds because the disc image stays on the same remote storage repository.
+ - You would do this if the physical VM hosts were out of resources or you needed to reboot it.
+	- In the latter case, you could move all of your VMs off the VM host while they're running, reboot the
+	 physical host, and move them back.
+	- Users of those VMs wouldn't even know.
+ - With this setup, the VM host machines would only need to contain CPUs, RAM, and network card.
+
+ - Another useful tool for allocating VM resources is thin provisioning.
+ - Commit more resources than available.
+ - 100 users x 1 TB = allocate 100 TB (thick provisioning)
+ - 100 users x 1 TB = only allocate 10 TB (thin provisioning)
+ - As soon as you run out of space, you'd allocate more storage.
+ - Most users don't use 100% of resources.
+ - Thin provisioning not limited to storage
+	CPUs, memory, etc.
+
+Bootstrapping
+ - When creating a new instance of a VM in a cloud setting like Amazon Web Services, you do not have access to the hypervisor.
+ - One solution is injecting data into the VM from outside, using cloud-init
+ - It's common to inject metadata and user data to a booting VM including
+	- SSH keys
+	- Users
+	- Networking
+ - When the system boots, it looks for user data passed to it and processes it.
+ - You can even pass shell scripts as user data.
+ - Often you will have to manage multiple different hypervisors in one environment.
+ - When you have multiple hypervisor stacks, you end up with multiple different types of tool sets to manage them.
+	- Libvirt was created to end this
+ - Libvirt runs on Linux, macOS, FreeBSD, and Windows.
+ - Libvirt gives us one set of tools to manage many different virtualization systems.
+
+libvirt Hypervisor Support
+ - Xen
+ - LCX (Linux containers)
+ - OpenVZ
+ - QEMU
+ - VirtualBox
+ - VMware ESX
+ - VMware Workstation
+ - Microsoft Hyper-V
+
+libvirt VM Storage Pools
+ - VM disk images and directories
+ - Network file systems
+ - iSCSI SANs
+ - ZFS
+
+libvirt Commands
+ - virsh
+	an interactive shell for managing virtualization stacks, storage, and networks
+ - virt-clone
+ - virt-install
+ - virt-top
+ - Virtual Machine Manage GUI
+
+libvirt.org/docs.html
+
+==========
+
+Explore containers
+------------------
+
+Compartmentalizing Applications
+ - In the beginning, if you wanted to run an application on another operating system, you emulated that platform.
+ - QEMU is a good example of this.
+ - Later, virtual machines were created that allowed running entire operating systems on virtual machines much faster than emulation.
+ - The ceveat being that the virtualized CPU has to use the same instruction set as the real CPU because the hypervisor just passes the real CPU through to the VM.
+ - Often, there' no need to duplicate an entire operating system just to run an application, so containers were invented.
+
+Application Requirements
+ - Supporting tools
+ - Libraries
+ - Additional software
+
+OS Containers
+ - Executables
+ - Libraries
+ - Databases
+ - OS-specific files
+ - Additional services
+
+LXC
+ - linuxcontainers.org
+ - LXC - Linux containers
+ - LXD - Linux container manager
+ - LXCFS - User space file system
+ - distrobuilder - builds container images
+ - Includes a portion of a Linux OS
