@@ -1371,3 +1371,110 @@ LXC
  - LXCFS - User space file system
  - distrobuilder - builds container images
  - Includes a portion of a Linux OS
+ - LXC containers are often called 'virtual machines'
+
+Docker
+ - Lightweight
+ - Apps runnable on host
+ - Docker container format
+ - Service to manage containers
+
+Container Templating
+ - LXC
+	- LXD to manage containers
+ - Docker
+	- Container images
+	- Container configuration
+
+Docker Commands
+ - attach
+	- attaches streams from host to cintainer (stdout, stdin)
+ - build
+	- creates containers from config
+ - commit
+	- creates images of changed container
+ - cp
+	- copies files between container and host
+ - exec
+	- runs commands in a container
+ - images
+	- lists local container images
+ - inspect
+	- shows details of container
+ - kill
+	- stops container
+ - login
+	- logs in to Docker Hub
+ - logs
+	- retrieves container log
+ - ps
+	- lists running containers
+ - pull
+	- retrieves a container from repo
+ - push
+	- commits container to repo
+ - rm
+	- deletes stopped container
+ - rmi
+	- deletes container image from local storage
+ - run
+	- starts a container image
+ - stop
+	- stops a container
+ - start
+	- starts a stopped container
+
+sudo dnf install -y docker
+sudo docker ps
+sudo docker pull docker.io/library/httpd:latest
+	Install a container with the latest generic Apache web server configuration by pulling it down from the
+	 docker hub.
+sudo docker run -d -t -p 8088:80 --name TestWeb httpd
+	-d runs container in the background
+	-t attaches a terminal to it
+	-p specifies to bind port 80 of the container to port 8088 of the host
+		If you don't expose the network ports to the host, you won't be able to communicate with it
+	--name gives the web server a name we can use with docker commands
+sudo docker ps
+
+ - Visit localhost:8088
+
+sudo docker exec -i -t TestWeb bash
+	This connects to the test web container and runs a bashc ommand line
+	Type exit to leave
+sudo docker stop TestWeb
+sudo docker ps
+sudo docker rm TestWeb
+sudo docker rmi httpd
+
+==========
+
+19. System Orchestration
+========================
+
+Utilize configuration management systems
+----------------------------------------
+
+Configuration Management Systems
+ - Puppet
+ - Chef
+ - Salt (SaltStack)
+ - Ansible
+
+ - With any of these configuration management systems, there's a control host and a client receiving commands and/or configuration information.
+ - In some cases, such as Salt and Ansible, the client may be agentless.
+
+ - With Puppet, the Control Host is called the Puppet Master.
+ - The client is the uppet Agent and it uses an SSL connection provided by openSSL.
+ - The configuration data is stored in a Puppet file formatted similar to the Ruby language, called a Puppet Manifest.
+ - The manifest is compiled specifically for each host.
+ - This keeps sensitive data secret but puts a lot of load on the Puppet Master.
+ - There are a lot of aftermarket pieces of software to enhance Puppet and give it more power as well as make it scale.
+
+ - Chef uses a lightweight RabbitMQ message queue connection between the server and the client's agent.
+ - Chef configuration data is stored as cookbooks and recipes and written in Ruby.
+
+ - Salt from SaltStack represents the next generation configuration management systems.
+ - The control host is called the Salt Master and the client is the Salt Minion.
+ - It was designed from the beginning to be a remote execution stack with a super lightweight encrypted tunnel using ZeroMQ.
+ - Although by default it does have an agent, it can use the SSH protocol and run agentless.
