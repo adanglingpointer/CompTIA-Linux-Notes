@@ -1478,3 +1478,205 @@ Configuration Management Systems
  - The control host is called the Salt Master and the client is the Salt Minion.
  - It was designed from the beginning to be a remote execution stack with a super lightweight encrypted tunnel using ZeroMQ.
  - Although by default it does have an agent, it can use the SSH protocol and run agentless.
+ - Salt configuration files are stored in YAML format and they're not compiled specifically for each client, as this puts a great load on the control host.
+ - The entire Salt state file is sent across the network and the client only pays attention to the portion that pertains to it.
+ - For sensitive data, Salt has specific state files called Salt Pillars, which are specific to each client.
+
+ - Ansible uses SSH in agentless mode to send commands and configuration data to the client.
+ - Ansible has SSH pipelining which allows executing multiple commands in one connection.
+ - Ansible stores it's configurations as playbooks and plays.
+
+==========
+
+Explain server roles
+--------------------
+
+ - Network time server (NTP)
+	- Keep time and distribute it to other hosts.
+	- The NTP server gets it's time from a reliable source and then other servers ask for that time and
+	 synchronize their own clocks.
+ - Secure shell (SSH) server
+ - Web server
+	- Apache & nginx
+ - Certificate authority
+	- Issues digital certificates that certify that the ownership of a public key is the named subject of the
+	 certificate.
+ - DNS name server
+	- Translate names to IP addresses.
+	- BIND
+ - Simple Network Management Protocol (SNMP)
+	- A standard protocol for collecting information about managed devices on networks.
+	- Modems, routers, switches, servers, workstations, printers
+ - File server
+	- CIFS, NFS
+ - Authentication server
+	- A server that checks credentials against a local database, or it can issue cryptographic tickets that
+	 can be used to access resources on other servers.
+	- Kerberos
+ - Proxy server
+	- A client may request data from the proxy server and it will forward it onto another server.
+ - Log server / remote logging server
+	- Can be on the local host but it is often a separate server on the network where multiple hosts log to
+	 remotely.
+	- A log server may have event monitoring softwarer on it to process the logs and create events.
+ - VPN server
+	- Acts as an endpoint for a virtual private network connection.
+	- A VPN client will open a tunnel to a VPN server which authenticates the client and completes the tunnel.
+	- Depending on the configuration, it may forward the client's encrypted request inside a private network.
+ - Event monitoring server
+	- Monitors conditions based on thresholds and creates events
+ - Database servers
+	- Often used in conjunction with web servers
+ - Print servers
+	- Provide print services to other hosts on a network.
+ - Mail servers
+	- Provide email services to hosts on the network or they may act as forwarding agents to forward email on
+	 to other networks.
+ - Load balancer
+	- Distributes traffic across multiple servers to spread the load of those requests.
+ - Clustering server
+	- Allows computers to work together in a cluster or group for the purpose of providing failover and
+	 increased availability of applications.
+	- A cluster can also be used to increase the available computing power in the case of an HPC
+	 (high performance cluster)
+
+==========
+
+Infrastructure and build automation
+-----------------------------------
+
+ - Infrastructure automation is the process of scripting or automating environments.
+ - Installing the OS
+ - Installing cloud instances
+ - Configuring software
+ - Getting the hosts to communicate with one another
+ - Building networks
+ - Build two or more identical systems
+ - Removes human error
+ - System configurations are documented
+
+ - SaltCloud - allows you to deploy infrastructure into the cloud
+ - Infrastructure as code - having configurations of entire networks of hosts in machine readable format.
+ - AWS CloudFormation, Puppet, Ansible, SaltStack, Chef, Kubernetes, Terraform, Google Cloud Deployment Manager,
+	Microsoft Azure Automation
+
+ - Infrastructure automation is different than build automation.
+ - Build automation involves automating the build process for developing software.
+ - Build automation involves automating the process of compiling the code into binary code, packaging the binary code, and running automated tests.
+ - Once this process is done, then the infrastructure automation can deploy the application into the infrastructure.
+ - The most popular build automation tools are Jenkins, CircleCI, LambdaTest, Bamboo, Travis CI, and Apache Mavern.
+
+==========
+
+About app deployment
+--------------------
+
+ - Application deployment comprises activities that make a software system available for use.
+
+Steps for App Deployment
+ - Release
+	- Follows the development process.
+	- Includes the steps to transfer the applications to the systems which will run them in production.
+	- Sometimes involves determining the resources required by the target system for desired performance and
+	 documenting subsequent activities for the deployment process.
+ - Installation
+	- Establishing some sort of installation procedure for executing the software.
+	- This is the process that Ansible is designed for.
+ - Activation
+	- The process of running the application for the first time and accepting license agreements, asking the
+	 user questions, and so on.
+ - Deactivation
+	- Often required to perform other deployment activities such as updating the system or even application
+	 decommissioning.
+ - Uninstallation
+
+Dev Environment -> Test Enviroment -> Release Candidate -> Production
+
+Web App Deployment
+ - Database Server
+	- Create tables
+	- Configure Java connection
+ - Application Server
+	- Configure HTTP ports
+	- Configure virtual hosts
+	- Install application
+	- Start application
+ - Web Server
+	- Configure inside firewall
+	- Configure web server
+	- Install static webpages
+	- Restart web server
+	- Configure outside firewall
+
+ - In the past, this would've been an all day job to set this up.
+ - Now, using IT automation it can be at the push of a button.
+ - Ansible playbooks.
+
+==========
+
+Explore orchestration
+---------------------
+
+ - Orchestration is the automated configuration, coordination, and management of computer systems and software.
+ - Orchestration takes advantage of multiple automated tasks that execute a larger workflow or process.
+ - Automating a process requires countless steps often spanning app, mobile, and database; so orchestration is the perfect term for this larger, more complex technique.
+
+Mass Deployments
+ - Deployments are complex
+ - Clustered applications
+ - Multiple datacenter locations
+ - Public, private, and hybrid clouds
+ - Complex application dependencies
+
+OpenStack Orchestration
+ - Storage
+ - Network
+ - Identity
+
+Specific Orchestration
+ - OpenStack Heat
+ - AWS CloudFormation
+ - Docker Swarm
+ - Kubernetes
+ - Apache Mesos
+
+Orchestrated Characteristics
+ - Dynamically scales
+ - Desired state
+ - Self-healing
+
+Kubernetes
+ - Designed by Google
+ - Open source
+ - Scalable
+ - Fault tolerant
+
+Kubernetes Terms
+ - Cluster service
+ - Uses YAML files to deploy and manage app pods.
+ - A YAML file stores the app's containers automated configuration and desired state settings.
+ - YAML is also the markup language used by some other configuration management systems like Puppet and SaltStack.
+ - An app pod container one or more running containers.
+ - A worker is a pod host system that uses a Kubernetes agent to communicate with a cluster service.
+
+Docker Orchestration
+ - Docker Swarm
+ - A group of Docker containers is called a cluster which appears as a single container.
+ - Monitor cluster
+ - Return to desired state
+ - Easy point of entry for Docker users
+
+ - Kubernetes and Swarm manage containers that run on an operating system with a kernel.
+ - Mesos is a distributed kernel.
+
+Apache Mesos
+ - Distributed kernel
+ - Any workload (in containers or not)
+ - Not orchestration
+ - Mesos + Marathon (or Kronos, or Kenkins) = orchestration
+
+==========
+
+comptia.org/testing/exam-vouchers/exam-prices#linux
+comptia.org/certifications/linux#examdetails
+
