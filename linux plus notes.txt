@@ -61,6 +61,15 @@ Arch
 
 ==========
 
+ - Install
+ - Reboot
+ - Login
+
+ - For the best experience you will want to install virtual box guest editions in your virtual machine.
+ - This will allow full screen and seamless mouse.
+
+sudo dnf update -y
+sudo reboot
 sudo dnf group install -y "Development tools"
 sudo dnf install -y kernel-devel
 
@@ -87,7 +96,7 @@ Filesystem Hierarchy Standard
 		can also be input/output characters that act as if they were devices
 	/etc	= contains static configuration files
 		files should be stored in subdirectories
-		can not be executible binaries
+		can not be executable binaries
 	/home	= home directory for regular users to store their personal files
 		store one directory per user
 	/lib	= shared library images needed to boot the system and run commands in the filesystem,
