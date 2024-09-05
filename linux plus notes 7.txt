@@ -163,8 +163,8 @@ Wildcards
 
  - One of the reasons that manipulating files on the command line can be faster and more efficient than the GUI is file globbing.
  - File globbing uses patterns containing wildcard to match files based on their names.
- - File globbing - The process of expanding a nonspecifric file name containing wildcard characters in specific file names.
- - For instance, if you wanted to list all file names starting with the word 'file' followed by an extension uou could use:
+ - File globbing - The process of expanding a nonspecific file name containing wildcard characters in specific file names.
+ - For instance, if you wanted to list all file names starting with the word 'file' followed by an extension you could use:
 	ls file*
  - This glob can be used with any command as the globbing is handled by the shell itself.
 
@@ -277,7 +277,7 @@ vi readpipe.sh
 		done
 	fi
 
- - We need tp check to make sure that /dev/stdin is a pipe.
+ - We need to check to make sure that /dev/stdin is a pipe.
  - If it is, then we'll read from STDIN using the while-read loop, and assign it to the variable named LINE until we run out of data.
  - Inside the loop, we'll display each line using echo.
 

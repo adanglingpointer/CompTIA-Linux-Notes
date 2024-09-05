@@ -291,7 +291,7 @@ Command	->	/home/mypipe	->	Command
 a named pipe exists in the file system, that acts like a file on the disk
 
 terminal one:
-nkfifo named_pipe
+mkfifo named_pipe
 echo "Hi" > named_pipe
 
 terminal two:
@@ -388,6 +388,7 @@ $ anchors to the end of the line
 
 regular expresions for finding more than one:
 locate --regex '^/usr.*{pixmaps|backgrounds}.*jpg'
+	[doesn't work for me]
 
 this includes results for pixmaps or backgrounds
 
@@ -495,7 +496,7 @@ and not executable by anyone [ \! -perm /a+x ]
 
 Finding by SELinux security context using the -context option:
 find / -type f -context '*ifconfig_exec_t*'
-context is matches using pattern matching
+context is matched using pattern matching
 
 Find can also perform a function with the files.
 
@@ -621,6 +622,7 @@ cc = cut line and immediately enter edit mode
 
 :%/Line/Newline
 	replace Line with Newline
+	[doesn't work for me]
 
 vim file1.txt file2.txt file3.txt
 	open multiple files at once
@@ -644,7 +646,7 @@ find text in files with grep
 ----------------------------
 
 grep root /etc/passwd
-	search for the root root in /etc/passwd
+	search for root in /etc/passwd
 
 run two commands in a row, second one after the first finishes, whether the first finished successfully or not:
 	echo "hi" ; echo "there"
@@ -811,7 +813,7 @@ Bootloader stage
 
 Kernel stage
  - kernel loads the RAM disk into RAM
-	this RAM disk servers as a temporary root file system
+	this RAM disk serves as a temporary root file system
  - kernel loads device drivers and config files from RAM disk
 	this file system includes kernel modules, drivers, and possibly even installation automation files,
 	such as kickstart files
@@ -981,6 +983,8 @@ ctrl+d to exit, system will continue to boot
 
 if you don't have the password or need password recovery, you'll need a different method
 
+	[ these instructions break my system ]
+
 reboot, and press e on kernel in grub again
 at the end of vmlinux line, add:
 	init=/bin/sh
@@ -1010,7 +1014,7 @@ sudo systemctl --type=target --all
 
 targets include:
 	emergency.target
-	garphical.target
+	graphical.target
 	multi-user.target
 
 sudo systemctl set-default graphical.target
@@ -1440,7 +1444,7 @@ sudo systemctl enable atd
 job scheduling
 --------------
 
-types of schedules jobs:
+types of scheduled jobs:
  - one-time AT jobs
  - one-time batch jobs
  - recurring user jobs
@@ -1636,7 +1640,7 @@ WantedBy=multi-user.target
 
 -
 
-example of a time file:
+example of a timer file:
 backup.timer
 
 [Unit]
@@ -1685,7 +1689,7 @@ WantedBy=timers.target
 Analyze system processes and optimize
 -------------------------------------
 
- - /prov/cpuinfo
+ - /proc/cpuinfo
  - uptime
  - loadaverage
 
@@ -1736,7 +1740,7 @@ troubleshoot applications and hardware
 --------------------------------------
 
  - in any operating system with SELinux in enforcing mode, there may be context violations for applications
- - if you have a graphical interface you may be notified in there's been a biolation
+ - if you have a graphical interface you may be notified in there's been a violation
 	and an application has been restricted
  - if you don't get a notification you can always run sealert, which will bring up the SELinux alert browser,
 	the GUI tool that shows violations
